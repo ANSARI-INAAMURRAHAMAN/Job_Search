@@ -4,6 +4,9 @@ import jobRouter from "./routes/jobRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import applicationRouter from "./routes/applicationRoutes.js";
 import authRouter from "./routes/authRoutes.js";
+import userProfileRoute from "./routes/userProfileRoute.js";
+import fs from "fs";
+import path from "path";
 import { config } from "dotenv";
 import cors from "cors";
 import { errorMiddleware } from "./middlewares/error.js";
@@ -16,6 +19,18 @@ config({ path: "./config/config.env" });
 
 // Initialize passport configuration
 import("./config/passport.js");
+
+// Create uploads directory if it doesn't exist (same as applications)
+const uploadsDir = path.join(process.cwd(), "public", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Create temp directory if it doesn't exist
+const tempDir = path.join(process.cwd(), "temp");
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
 
 app.use(
   cors({
@@ -40,6 +55,10 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/application", applicationRouter);
 app.use('/api/v1/auth', authRouter);
+
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api/v1/user-profile", userProfileRoute);
 
 dbConnection();
 

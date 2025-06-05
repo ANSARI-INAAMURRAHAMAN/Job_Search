@@ -58,6 +58,9 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .nav-link::before {
@@ -79,6 +82,10 @@
 
 .nav-link:hover::before {
   left: 100%;
+}
+
+.nav-icon {
+  font-size: 0.9rem;
 }
 
 .logout-btn {

@@ -5,7 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { AiOutlineClose } from "react-icons/ai";
-import { FaSignOutAlt } from "react-icons/fa";
+import { FaSignOutAlt, FaUser } from "react-icons/fa";
 import "./Navbar.css";
 
 const Navbar = memo(() => {
@@ -39,6 +39,7 @@ const Navbar = memo(() => {
       to: "/applications/me",
       label: user?.role === "Employer" ? "Applications" : "My Applications"
     },
+    { to: "/profile", label: "Profile", icon: <FaUser /> },
     ...(user?.role === "Employer" ? [
       { to: "/job/post", label: "Post Job" },
       { to: "/job/me", label: "My Jobs" }
@@ -53,9 +54,10 @@ const Navbar = memo(() => {
         </Link>
 
         <ul className={`nav-menu ${show ? "active" : ""}`}>
-          {navLinks.map(({ to, label }) => (
+          {navLinks.map(({ to, label, icon }) => (
             <li key={to} className="nav-item">
               <Link to={to} className="nav-link" onClick={closeMenu}>
+                {icon && <span className="nav-icon">{icon}</span>}
                 {label}
               </Link>
             </li>

@@ -3,7 +3,7 @@ import React, { useContext, useState, memo, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../main";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaFileAlt, FaUpload } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
 import "./Application.css";
 
 const Application = memo(() => {
@@ -14,9 +14,7 @@ const Application = memo(() => {
     phone: "",
     address: "",
   });
-  const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [fileError, setFileError] = useState("");
 
   const { isAuthorized, user } = useContext(Context);
   const navigateTo = useNavigate();
@@ -24,31 +22,6 @@ const Application = memo(() => {
 
   const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  const handleFileChange = useCallback((event) => {
-    const file = event.target.files[0];
-    setFileError("");
-    
-    if (!file) {
-      setResume(null);
-      return;
-    }
-    
-    const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      setFileError("Please select a valid image file (PNG, JPEG, or WEBP)");
-      setResume(null);
-      return;
-    }
-    
-    if (file.size > 2 * 1024 * 1024) {
-      setFileError("File size should be less than 2MB");
-      setResume(null);
-      return;
-    }
-    
-    setResume(file);
   }, []);
 
   const handleApplication = useCallback(async (e) => {
@@ -60,17 +33,11 @@ const Application = memo(() => {
       return;
     }
     
-    if (!resume) {
-      setFileError("Please upload your resume");
-      return;
-    }
-    
     setLoading(true);
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       data.append(key, value);
     });
-    data.append("resume", resume);
     data.append("jobId", id);
 
     try {
@@ -90,7 +57,6 @@ const Application = memo(() => {
         phone: "",
         address: "",
       });
-      setResume(null);
       toast.success(response.data.message);
       navigateTo("/job/getall");
     } catch (error) {
@@ -99,7 +65,7 @@ const Application = memo(() => {
     } finally {
       setLoading(false);
     }
-  }, [formData, resume, id, navigateTo]);
+  }, [formData, id, navigateTo]);
 
   if (!isAuthorized || (user && user.role === "Employer")) {
     navigateTo("/");
@@ -196,28 +162,6 @@ const Application = memo(() => {
                 rows={6}
                 required
               />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <FaUpload className="label-icon" />
-                Resume *
-              </label>
-              <div className="file-upload-area">
-                <input
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.webp"
-                  onChange={handleFileChange}
-                  className="file-input"
-                  id="resume-upload"
-                />
-                <label htmlFor="resume-upload" className="file-upload-label">
-                  <FaUpload className="upload-icon" />
-                  <span>{resume ? resume.name : "Choose resume file"}</span>
-                  <small>PNG, JPEG, WEBP (Max 2MB)</small>
-                </label>
-                {fileError && <p className="error-text">{fileError}</p>}
-              </div>
             </div>
           </div>
 

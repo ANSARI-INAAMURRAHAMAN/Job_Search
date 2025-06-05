@@ -17,6 +17,8 @@ import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
 import RoleSelection from "./components/Auth/RoleSelection";
+import UserProfile from "./components/User/UserProfile";
+import EditProfile from "./components/User/EditProfile";
 
 const App = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
@@ -53,6 +55,8 @@ const App = () => {
           <Route path="/job/post" element={<PostJob />} />
           <Route path="/job/me" element={<MyJobs />} />
           <Route path="/select-role" element={<RoleSelection />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
