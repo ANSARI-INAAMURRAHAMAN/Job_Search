@@ -1,0 +1,14 @@
+@import './Register.css';
+
+/* Login-specific overrides */
+.auth-image-section {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.image-overlay h3 {
+  color: white;
+}
+
+.image-overlay p {
+  color: rgba(255, 255, 255, 0.9);
+}
