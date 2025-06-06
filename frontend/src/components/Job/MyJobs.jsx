@@ -5,6 +5,7 @@ import { FaCheck, FaEdit, FaTrash, FaBriefcase, FaMapMarkerAlt, FaDollarSign, Fa
 import { RxCross2 } from "react-icons/rx";
 import { Context } from "../../main";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../config/api";
 import "./MyJobs.css";
 
 // Memoized Job Card Component for better performance
@@ -269,6 +270,21 @@ const MyJobs = () => {
     }));
   };
 
+  const fetchJobs = async () => {
+    try {
+      const { data } = await axios.get(
+        `${API_BASE_URL}/job/getmyjobs`,
+        { withCredentials: true }
+      );
+      setMyJobs(data.myJobs);
+    } catch (error) {
+      toast.error(error.response.data.message);
+      setMyJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateJob = async (jobId) => {
     try {
       const validSkills = editData.requiredSkills.filter(skill => skill.trim() !== "");
@@ -302,7 +318,7 @@ const MyJobs = () => {
       console.log("Updating job with data:", updateData);
 
       const res = await axios.put(
-        `http://localhost:4000/api/v1/job/update/${jobId}`,
+        `${API_BASE_URL}/job/update/${jobId}`,
         updateData,
         { 
           withCredentials: true,
@@ -328,7 +344,7 @@ const MyJobs = () => {
     setDeleting(jobId);
     try {
       const response = await axios.delete(
-        `http://localhost:4000/api/v1/job/delete/${jobId}`, 
+        `${API_BASE_URL}/job/delete/${jobId}`, 
         { withCredentials: true }
       );
       toast.success(response.data.message);
@@ -350,20 +366,6 @@ const MyJobs = () => {
 
   // Fetching all jobs
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const { data } = await axios.get(
-          "http://localhost:4000/api/v1/job/getmyjobs",
-          { withCredentials: true }
-        );
-        setMyJobs(data.myJobs);
-      } catch (error) {
-        toast.error(error.response.data.message);
-        setMyJobs([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchJobs();
   }, []);
 
