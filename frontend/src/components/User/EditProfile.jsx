@@ -13,6 +13,7 @@ import {
   FaPhone,
   FaMapMarkerAlt
 } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./EditProfile.css";
 
 const EditProfile = () => {
@@ -98,7 +99,7 @@ const EditProfile = () => {
       };
 
       const { data } = await axios.put(
-        "http://localhost:4000/api/v1/user/update",
+        `${API_BASE_URL}/user/update`,
         updateData,
         { 
           withCredentials: true,

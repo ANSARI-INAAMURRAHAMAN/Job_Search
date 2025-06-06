@@ -4,6 +4,7 @@ import { Context } from '../../main';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FaPaperPlane, FaArrowLeft, FaUser, FaBriefcase } from 'react-icons/fa';
+import API_BASE_URL from '../../config/api';
 import './ChatWindow.css';
 
 const ChatWindow = () => {
@@ -39,7 +40,7 @@ const ChatWindow = () => {
   const fetchChat = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/chat/${applicationId}`,
+        `${API_BASE_URL}/chat/${applicationId}`,
         { withCredentials: true }
       );
       setChat(data.chat);
@@ -60,7 +61,7 @@ const ChatWindow = () => {
     setSending(true);
     try {
       const { data } = await axios.post(
-        `http://localhost:4000/api/v1/chat/${applicationId}/message`,
+        `${API_BASE_URL}/chat/${applicationId}/message`,
         { content: message },
         { withCredentials: true }
       );
@@ -77,7 +78,7 @@ const ChatWindow = () => {
   const markAsRead = async () => {
     try {
       await axios.put(
-        `http://localhost:4000/api/v1/chat/${applicationId}/read`,
+        `${API_BASE_URL}/chat/${applicationId}/read`,
         {},
         { withCredentials: true }
       );

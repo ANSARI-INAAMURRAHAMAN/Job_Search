@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaFileAlt, FaTrash, FaEye, FaCalendarAlt, FaBriefcase } from "react-icons/fa";
 import ResumeModal from "./ResumeModal";
+import API_BASE_URL from "../../config/api";
 import "./MyApplications.css";
 
 const ApplicationCard = memo(({ application, onDelete, onViewResume, showDeleteBtn = false }) => (
@@ -84,7 +85,7 @@ const MyApplications = () => {
     
     try {
       const response = await axios.delete(
-        `http://localhost:4000/api/v1/application/delete/${id}`,
+        `${API_BASE_URL}/application/delete/${id}`,
         { withCredentials: true }
       );
       toast.success(response.data.message);
@@ -110,8 +111,8 @@ const MyApplications = () => {
     }
 
     const endpoint = user?.role === "Employer" 
-      ? "http://localhost:4000/api/v1/application/employer/getall"
-      : "http://localhost:4000/api/v1/application/jobseeker/getall";
+      ? `${API_BASE_URL}/application/employer/getall`
+      : `${API_BASE_URL}/application/jobseeker/getall`;
 
     axios.get(endpoint, { withCredentials: true })
       .then(res => {

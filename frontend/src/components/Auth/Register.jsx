@@ -7,6 +7,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
+import API_BASE_URL from "../../config/api";
 import "./Register.css";
 
 const Register = memo(() => {
@@ -36,7 +37,7 @@ const Register = memo(() => {
       const fetchUser = async () => {
         try {
           const response = await axios.get(
-            "http://localhost:4000/api/v1/user/getuser",
+            `${API_BASE_URL}/user/getuser`,
             { withCredentials: true }
           );
           setUser(response.data.user);
@@ -73,7 +74,7 @@ const Register = memo(() => {
     
     try {
       const { data } = await axios.post(
-        "http://localhost:4000/api/v1/user/register",
+        `${API_BASE_URL}/user/register`,
         formData,
         {
           headers: {
@@ -102,7 +103,7 @@ const Register = memo(() => {
     }
     
     // Redirect to Google OAuth with role
-    window.location.href = `http://localhost:4000/api/v1/auth/google?role=${formData.role}`;
+    window.location.href = `https://job-search-ypji.onrender.com/api/v1/auth/google?role=${formData.role}`;
   }, [formData.role]);
 
   if (isAuthorized) {

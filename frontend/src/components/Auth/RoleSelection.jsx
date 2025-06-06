@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Context } from "../../main";
+import API_BASE_URL from "../../config/api";
 import "./RoleSelection.css";
 
 const RoleSelection = memo(() => {
@@ -26,7 +27,7 @@ const RoleSelection = memo(() => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/v1/auth/complete-google-signup",
+        `${API_BASE_URL}/auth/complete-google-signup`,
         { role: selectedRole },
         { withCredentials: true }
       );

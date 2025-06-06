@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FaComments, FaUser, FaBriefcase, FaClock } from 'react-icons/fa';
+import API_BASE_URL from '../../config/api';
 import './ChatList.css';
 
 const ChatList = () => {
@@ -24,7 +25,7 @@ const ChatList = () => {
   const fetchChats = async () => {
     try {
       const { data } = await axios.get(
-        'http://localhost:4000/api/v1/chat',
+        `${API_BASE_URL}/chat`,
         { withCredentials: true }
       );
       setChats(data.chats);

@@ -18,6 +18,7 @@ import {
   FaGlobe,
   FaGithub
 } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./UserProfile.css";
 
 const UserProfile = () => {
@@ -38,7 +39,7 @@ const UserProfile = () => {
   const fetchProfile = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/user/getuser",
+        `${API_BASE_URL}/user/getuser`,
         { withCredentials: true }
       );
       console.log("Profile data fetched:", data.user);

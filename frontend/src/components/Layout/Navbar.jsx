@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { AiOutlineClose } from "react-icons/ai";
 import { FaSignOutAlt, FaUser, FaComments } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./Navbar.css";
 
 const Navbar = memo(() => {
@@ -16,7 +17,7 @@ const Navbar = memo(() => {
   const handleLogout = useCallback(async () => {
     try {
       const response = await axios.get(
-        "http://localhost:4000/api/v1/user/logout",
+        `${API_BASE_URL}/user/logout`,
         { withCredentials: true }
       );
       toast.success(response.data.message);

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../main";
 import { FaUser, FaEnvelope, FaPhone, FaFileUpload, FaPaperPlane, FaArrowLeft } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./Application.css";
 
 const Application = memo(() => {
@@ -69,7 +70,7 @@ const Application = memo(() => {
 
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/v1/application/post",
+        `${API_BASE_URL}/application/post`,
         data,
         {
           withCredentials: true,

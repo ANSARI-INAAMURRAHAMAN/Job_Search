@@ -16,6 +16,7 @@ import {
   FaGithub,
   FaComments
 } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./ApplicantProfile.css";
 
 const ApplicantProfile = () => {
@@ -32,7 +33,7 @@ const ApplicantProfile = () => {
         console.log("Fetching application with ID:", applicationId);
         
         const { data } = await axios.get(
-          `http://localhost:4000/api/v1/application/${applicationId}`,
+          `${API_BASE_URL}/application/${applicationId}`,
           { withCredentials: true }
         );
         
@@ -91,7 +92,7 @@ const ApplicantProfile = () => {
       console.log("Application ID:", applicationId);
       
       const { data } = await axios.put(
-        `http://localhost:4000/api/v1/application/update/${applicationId}`,
+        `${API_BASE_URL}/application/update/${applicationId}`,
         { status },
         { 
           withCredentials: true,
