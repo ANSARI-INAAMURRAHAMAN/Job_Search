@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState, memo, useMemo } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Context } from "../../main";
+import API_BASE_URL from "../../config/api";
 import "./Jobs.css";
 
 const Jobs = memo(() => {
@@ -25,7 +26,7 @@ const Jobs = memo(() => {
 
   const fetchJobs = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/v1/job/getall", {
+      const res = await axios.get(`${API_BASE_URL}/job/getall`, {
         withCredentials: true,
       });
       setJobs(res.data.jobs || []);

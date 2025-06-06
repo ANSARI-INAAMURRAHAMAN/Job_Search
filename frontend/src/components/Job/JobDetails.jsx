@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Context } from "../../main";
 import { FaMapMarkerAlt, FaClock, FaDollarSign, FaCalendarAlt, FaUser, FaBuilding, FaBriefcase, FaGlobe, FaTags } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./JobDetails.css";
 
 const JobDetails = () => {
@@ -25,7 +26,7 @@ const JobDetails = () => {
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:4000/api/v1/job/${id}`, {
+      const res = await axios.get(`${API_BASE_URL}/job/${id}`, {
         withCredentials: true,
       });
       setJob(res.data.job);
