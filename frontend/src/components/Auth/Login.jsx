@@ -102,14 +102,11 @@ const Login = memo(() => {
 
   // Google Login Handler
   const handleGoogleLogin = useCallback(() => {
-    if (!formData.role) {
-      toast.error("Please select your role first");
-      return;
-    }
-
-    // Redirect to Google OAuth with role
-    window.location.href = `https://job-search-ypji.onrender.com/api/v1/auth/google?role=${formData.role}`;
-  }, [formData.role]);
+    // Redirect to backend Google OAuth without role parameter
+    // Role will be selected on the role selection page
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://job-search-ypji.onrender.com/api/v1';
+    window.location.href = `${backendUrl}/auth/google`;
+  }, []);
 
   if (isAuthorized) {
     return <Navigate to={"/"} />;
@@ -149,19 +146,40 @@ const Login = memo(() => {
             </div>
           </div>
 
-          {/* Google Login Button */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="google-login-btn"
-            disabled={!formData.role || isLoading}
-          >
-            <FaGoogle />
-            Continue with Google
-          </button>
-
-          <div className="divider">
-            <span>OR</span>
+          <div className="google-auth-section" style={{ marginTop: '20px' }}>
+            <div className="divider" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              margin: '20px 0',
+              textAlign: 'center'
+            }}>
+              <hr style={{ flex: 1, border: 'none', height: '1px', backgroundColor: '#ddd' }} />
+              <span style={{ margin: '0 15px', color: '#666' }}>Or continue with Google</span>
+              <hr style={{ flex: 1, border: 'none', height: '1px', backgroundColor: '#ddd' }} />
+            </div>
+            
+            <button
+              type="button"
+              className="google-login-btn"
+              onClick={handleGoogleLogin}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                backgroundColor: '#fff',
+                color: '#333',
+                cursor: 'pointer',
+                width: '100%',
+                fontSize: '16px'
+              }}
+            >
+              <FaGoogle style={{ color: '#4285f4' }} />
+              Continue with Google
+            </button>
           </div>
 
           <div className="inputTag">

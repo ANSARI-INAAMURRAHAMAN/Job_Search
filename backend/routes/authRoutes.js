@@ -1,6 +1,6 @@
 import express from 'express';
 import passport from 'passport';
-import { googleCallback, googleAuth } from '../controllers/authController.js';
+import { googleCallback, googleAuth, completeGoogleSignup } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -15,5 +15,8 @@ router.get('/google/callback',
   }),
   googleCallback
 );
+
+// Complete Google signup with role
+router.post('/complete-google-signup', completeGoogleSignup);
 
 export default router;

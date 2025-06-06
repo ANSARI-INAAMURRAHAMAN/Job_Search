@@ -7,16 +7,17 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.NODE_ENV === 'production' 
-        ? `${process.env.BACKEND_URL}/api/v1/auth/google/callback`
-        : 'http://localhost:4000/api/v1/auth/google/callback',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log('Google Strategy - Profile received:', profile.id, profile.emails[0].value);
+        
         // Check if user already exists with this Google ID
         let existingUser = await User.findOne({ googleId: profile.id });
 
         if (existingUser) {
+          console.log('Existing user found by Google ID:', existingUser._id);
           return done(null, existingUser);
         }
 
@@ -24,18 +25,21 @@ passport.use(
         existingUser = await User.findOne({ email: profile.emails[0].value });
 
         if (existingUser) {
+          console.log('Existing user found by email, linking Google ID:', existingUser._id);
           // Link Google account to existing user
           existingUser.googleId = profile.id;
           await existingUser.save();
           return done(null, existingUser);
         }
 
-        // Create new user - but we need role from session
+        // New user - needs role selection
+        console.log('New user detected, needs role selection');
         return done(null, {
           googleProfile: profile,
           needsRole: true,
         });
       } catch (error) {
+        console.error('Google Strategy error:', error);
         return done(error, null);
       }
     }
