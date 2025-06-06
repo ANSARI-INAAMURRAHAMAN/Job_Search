@@ -64,18 +64,44 @@ export const login = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const logout = catchAsyncErrors(async (req, res, next) => {
-  res
-    .status(201)
-    .cookie("token", "", {
+  console.log('Logout request received');
+  
+  // Clear all possible cookie variations
+  const cookieOptions = [
+    {
       httpOnly: true,
-      expires: new Date(Date.now()),
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    })
-    .json({
-      success: true,
-      message: "Logged Out Successfully.",
-    });
+      expires: new Date(0),
+      secure: true,
+      sameSite: "none",
+      path: "/",
+      domain: ".onrender.com"
+    },
+    {
+      httpOnly: true,
+      expires: new Date(0),
+      secure: true,
+      sameSite: "none",
+      path: "/"
+    },
+    {
+      httpOnly: true,
+      expires: new Date(0),
+      secure: false,
+      sameSite: "lax",
+      path: "/"
+    }
+  ];
+
+  // Clear multiple cookie variations
+  cookieOptions.forEach((options, index) => {
+    const cookieName = index === 0 ? 'token' : `token${index}`;
+    res.cookie(cookieName, "", options);
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged Out Successfully.",
+  });
 });
 
 export const getUser = catchAsyncErrors(async (req, res, next) => {

@@ -11,22 +11,42 @@ import "./Navbar.css";
 
 const Navbar = memo(() => {
   const [show, setShow] = useState(false);
-  const { isAuthorized, setIsAuthorized, user } = useContext(Context);
+  const { isAuthorized, setIsAuthorized, user, setUser } = useContext(Context);
   const navigateTo = useNavigate();
 
   const handleLogout = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/user/logout`,
-        { withCredentials: true }
-      );
-      toast.success(response.data.message);
+      console.log("Logging out user...");
+
+      // Call logout endpoint
+      await axios.get(`${API_BASE_URL}/user/logout`, {
+        withCredentials: true
+      });
+
+      // Clear local storage
+      localStorage.removeItem("authToken");
+
+      // Clear any cookies
+      document.cookie =
+        "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.onrender.com;";
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+      // Update state
       setIsAuthorized(false);
-      navigateTo("/login");
+      setUser({});
+
+      toast.success("Logged out successfully");
+      navigateTo("/");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Logout failed");
+      console.error("Logout error:", error);
+      // Even if logout request fails, clear local state
+      localStorage.removeItem("authToken");
+      setIsAuthorized(false);
+      setUser({});
+      toast.success("Logged out successfully");
+      navigateTo("/");
     }
-  }, [setIsAuthorized, navigateTo]);
+  }, [setIsAuthorized, setUser, navigateTo]);
 
   const toggleMenu = useCallback(() => setShow(prev => !prev), []);
   const closeMenu = useCallback(() => setShow(false), []);
