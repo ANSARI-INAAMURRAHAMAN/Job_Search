@@ -14,6 +14,7 @@ import { errorMiddleware } from "./middlewares/error.js";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
 import passport from "passport";
+import session from "express-session";
 
 const app = express();
 config({ path: "./config/config.env" });
@@ -21,7 +22,7 @@ config({ path: "./config/config.env" });
 // Initialize passport configuration
 import("./config/passport.js");
 
-// Create uploads directory if it doesn't exist (same as applications)
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -45,13 +46,28 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-super-secret-session-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: false,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
+}));
+
 app.use(
   fileUpload({
     useTempFiles: true,
     tempFileDir: "/tmp/",
   })
 );
+
 app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/application", applicationRouter);

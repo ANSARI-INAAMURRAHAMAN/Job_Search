@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
-import validator from "validator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import validator from "validator";
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -27,203 +28,94 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    required: [true, "User role required"],
-    enum: ["Job Seeker", "Employer", "PENDING"], // Add PENDING as valid enum
+    required: [true, "Please select a role"],
+    enum: ["Job Seeker", "Employer"],
+  },
+  bio: {
+    type: String,
+    maxLength: [1000, "Bio cannot exceed 1000 characters!"],
+  },
+  location: {
+    city: {
+      type: String,
+      maxLength: [50, "City name cannot exceed 50 characters!"],
+    },
+    country: {
+      type: String,
+      maxLength: [50, "Country name cannot exceed 50 characters!"],
+    }
+  },
+  education: [{
+    degree: String,
+    institution: String,
+    fieldOfStudy: String,
+    startDate: Date,
+    endDate: Date,
+    grade: String,
+    description: String
+  }],
+  experience: [{
+    jobTitle: String,
+    company: String,
+    location: String,
+    startDate: Date,
+    endDate: Date,
+    isCurrentJob: { type: Boolean, default: false },
+    description: String,
+    skills: [String]
+  }],
+  projects: [{
+    title: String,
+    description: String,
+    technologies: [String],
+    startDate: Date,
+    endDate: Date,
+    projectUrl: String,
+    githubUrl: String,
+    status: {
+      type: String,
+      enum: ['Completed', 'In Progress', 'On Hold'],
+      default: 'Completed'
+    }
+  }],
+  skills: [{
+    name: String,
+    level: {
+      type: String,
+      enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+      default: 'Intermediate'
+    },
+    category: {
+      type: String,
+      enum: ['Programming', 'Framework', 'Database', 'Tool', 'Soft Skill', 'Other'],
+      default: 'Other'
+    }
+  }],
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-
-  // Professional Information
-  experience: [
-    {
-      jobTitle: {
-        type: String,
-        required: false,
-      },
-      company: {
-        type: String,
-        required: false,
-      },
-      location: {
-        type: String,
-        required: false,
-      },
-      startDate: {
-        type: Date,
-        required: false,
-      },
-      endDate: {
-        type: Date,
-        required: false,
-      },
-      isCurrentJob: {
-        type: Boolean,
-        default: false,
-      },
-      description: {
-        type: String,
-        required: false,
-      },
-      skills: [
-        {
-          type: String,
-        },
-      ],
-    },
-  ],
-
-  education: [
-    {
-      degree: {
-        type: String,
-        required: false,
-      },
-      institution: {
-        type: String,
-        required: false,
-      },
-      fieldOfStudy: {
-        type: String,
-        required: false,
-      },
-      startDate: {
-        type: Date,
-        required: false,
-      },
-      endDate: {
-        type: Date,
-        required: false,
-      },
-      grade: {
-        type: String,
-        required: false,
-      },
-      description: {
-        type: String,
-        required: false,
-      },
-    },
-  ],
-
-  projects: [
-    {
-      title: {
-        type: String,
-        required: false,
-      },
-      description: {
-        type: String,
-        required: false,
-      },
-      technologies: [
-        {
-          type: String,
-        },
-      ],
-      startDate: {
-        type: Date,
-        required: false,
-      },
-      endDate: {
-        type: Date,
-        required: false,
-      },
-      projectUrl: {
-        type: String,
-        required: false,
-      },
-      githubUrl: {
-        type: String,
-        required: false,
-      },
-      status: {
-        type: String,
-        enum: ["In Progress", "Completed", "On Hold"],
-        default: "Completed",
-      },
-    },
-  ],
-
-  skills: [
-    {
-      name: {
-        type: String,
-        required: false,
-      },
-      level: {
-        type: String,
-        enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
-        default: "Intermediate",
-      },
-      category: {
-        type: String,
-        enum: [
-          "Programming",
-          "Framework",
-          "Database",
-          "Tool",
-          "Soft Skill",
-          "Other",
-        ],
-        default: "Other",
-      },
-    },
-  ],
-
-  // Additional Profile Information
-  bio: {
-    type: String,
-    maxLength: [500, "Bio cannot exceed 500 characters"],
-  },
-
-  location: {
-    city: String,
-    country: String,
-  },
-
-  socialLinks: {
-    linkedin: String,
-    github: String,
-    portfolio: String,
-    twitter: String,
-  },
-
-  availability: {
-    type: String,
-    enum: ["Available", "Not Available", "Open to Opportunities"],
-    default: "Available",
-  },
-
-  expectedSalary: {
-    min: Number,
-    max: Number,
-    currency: {
-      type: String,
-      default: "USD",
-    },
-  },
-},
-{
-  timestamps: true,
 });
 
-
-//ENCRYPTING THE PASSWORD WHEN THE USER REGISTERS OR MODIFIES HIS PASSWORD
+// Encrypting the password when the user registers or modifies their password
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
   }
-  this.password = await bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 12);
 });
 
-//COMPARING THE USER PASSWORD ENTERED BY USER WITH THE USER SAVED PASSWORD
+// Comparing the user password entered by user with the user saved password
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-//GENERATING A JWT TOKEN WHEN A USER REGISTERS OR LOGINS, IT DEPENDS ON OUR CODE THAT WHEN DO WE NEED TO GENERATE THE JWT TOKEN WHEN THE USER LOGIN OR REGISTER OR FOR BOTH. 
+// Generating a JWT token when a user registers or logins, it depends on expiry time
 userSchema.methods.getJWTToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRE,

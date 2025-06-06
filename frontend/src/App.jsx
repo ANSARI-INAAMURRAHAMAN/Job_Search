@@ -62,7 +62,7 @@ const App = () => {
           <Route path="/job/me" element={<MyJobs />} />
           <Route path="/select-role" element={<RoleSelection />} />
           <Route path="/profile" element={<UserProfile />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/messages" element={<ChatList />} />
           <Route path="/chat/:applicationId" element={<ChatWindow />} />
           <Route path="*" element={<NotFound />} />

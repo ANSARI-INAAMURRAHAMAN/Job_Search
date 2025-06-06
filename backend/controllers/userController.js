@@ -96,20 +96,31 @@ export const getUser = catchAsyncErrors(async (req, res, next) => {
 export const updateUserProfile = catchAsyncErrors(async (req, res, next) => {
   const userId = req.user._id;
   
+  console.log("Update Profile Request Body:", req.body);
+  
   const updateData = { ...req.body };
+  
+  // Remove any undefined or null values
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] === undefined || updateData[key] === null) {
+      delete updateData[key];
+    }
+  });
   
   const user = await User.findByIdAndUpdate(
     userId,
     updateData,
     {
       new: true,
-      runValidators: false,
+      runValidators: false, // Disable validation for bulk update
     }
   ).select('-password');
   
   if (!user) {
     return next(new ErrorHandler("User not found", 404));
   }
+  
+  console.log("Updated User:", user);
   
   res.status(200).json({
     success: true,

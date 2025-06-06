@@ -1,3 +1,22 @@
+/* Import all styles from Login.css since they're identical */
+@import './Login.css';
+
+/* Any register-specific overrides can go here */
+.register-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.register-btn:hover:not(:disabled) {
+  box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  .register-btn {
+    background: linear-gradient(135deg, #059669, #047857);
+  }
+}
+
 .auth-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

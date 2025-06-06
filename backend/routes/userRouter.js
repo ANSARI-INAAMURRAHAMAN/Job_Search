@@ -5,7 +5,6 @@ import {
   logout,
   getUser,
   updateUserProfile,
-  getUserProfile,
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 
@@ -15,7 +14,6 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/logout", isAuthenticated, logout);
 router.get("/getuser", isAuthenticated, getUser);
-router.put("/update-profile", isAuthenticated, updateUserProfile);
-router.get("/profile/:userId", isAuthenticated, getUserProfile);
+router.put("/update", isAuthenticated, updateUserProfile);
 
 export default router;
