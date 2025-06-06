@@ -21,6 +21,7 @@ import EditProfile from "./components/User/EditProfile";
 import ApplicantProfile from "./components/Application/ApplicantProfile";
 import ChatList from "./components/Chat/ChatList";
 import ChatWindow from "./components/Chat/ChatWindow";
+import API_BASE_URL from "./config/api";
 
 const App = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
@@ -29,7 +30,7 @@ const App = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/api/v1/user/getuser",
+          `${API_BASE_URL}/user/getuser`,
           {
             withCredentials: true,
           }
