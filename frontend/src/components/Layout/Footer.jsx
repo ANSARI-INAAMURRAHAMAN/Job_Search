@@ -12,10 +12,10 @@ const Footer = memo(() => {
   if (!isAuthorized) return null
 
   const socialLinks = [
-    { href: 'https://github.com/exclusiveabhi', icon: FaGithub, label: 'GitHub' },
-    { href: 'https://leetcode.com/u/exclusiveabhi/', icon: SiLeetcode, label: 'LeetCode' },
-    { href: 'https://www.linkedin.com/in/abhishek-rajput-/', icon: FaLinkedin, label: 'LinkedIn' },
-    { href: 'https://www.instagram.com/exclusiveabhi/', icon: RiInstagramFill, label: 'Instagram' }
+    { href: 'https://github.com/ANSARI-INAAMURRAHAMAN', icon: FaGithub, label: 'GitHub' },
+    { href: 'https://leetcode.com/u/2NAS3kgcle/', icon: SiLeetcode, label: 'LeetCode' },
+    { href: 'https://www.linkedin.com/in/inaamurrahaman-ansari-aba512283/', icon: FaLinkedin, label: 'LinkedIn' },
+    { href: 'https://www.instagram.com/inaam_ansari201/', icon: RiInstagramFill, label: 'Instagram' }
   ]
 
   return (
