@@ -3,6 +3,7 @@ import dbConnection from "./database/dbConnection.js";
 import userRouter from "./routes/userRouter.js";
 import jobRouter from "./routes/jobRoutes.js";
 import applicationRouter from "./routes/applicationRouter.js";
+import chatRouter from "./routes/chatRouter.js";
 import authRouter from "./routes/authRoutes.js";
 import userProfileRoute from "./routes/userProfileRoute.js";
 import fs from "fs";
@@ -54,11 +55,12 @@ app.use(passport.initialize());
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/job", jobRouter);
 app.use("/api/v1/application", applicationRouter);
+app.use("/api/v1/chat", chatRouter);
 app.use('/api/v1/auth', authRouter);
+app.use("/api/v1/user-profile", userProfileRoute);
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-app.use("/api/v1/user-profile", userProfileRoute);
 
 dbConnection();
 

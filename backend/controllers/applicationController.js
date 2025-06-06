@@ -144,85 +144,111 @@ export const jobseekerDeleteApplication = catchAsyncErrors(
   }
 );
 
-// Get single application with applicant details (for employers)
+// Get single application by ID with full applicant profile
 export const getApplicationById = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
+  const { applicationId } = req.params;
   
-  if (!id) {
-    return next(new ErrorHandler("Application ID is required", 400));
-  }
-
-  // Check if ID is valid MongoDB ObjectId
-  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-    return next(new ErrorHandler("Invalid application ID format", 400));
-  }
-
-  const application = await Application.findById(id)
-    .populate({
-      path: "applicantID",
-      select: "name email phone role createdAt"
-    })
-    .populate({
-      path: "jobId",
-      select: "title category"
-    })
-    .populate({
-      path: "employerID",
-      select: "name email"
+  console.log("Getting application by ID:", applicationId);
+  console.log("User role:", req.user.role);
+  
+  try {
+    const application = await Application.findById(applicationId)
+      .populate({
+        path: 'applicantID',
+        select: '-password', // Get full user profile including all fields
+        model: 'User'
+      })
+      .populate({
+        path: 'employerID',
+        select: 'name email',
+        model: 'User'
+      });
+    
+    if (!application) {
+      return next(new ErrorHandler("Application not found", 404));
+    }
+    
+    // Ensure we have the job title from the application itself
+    const jobTitle = application.jobTitle || 
+                     application.jobInfo?.title || 
+                     application.jobInfo?.jobTitle ||
+                     "Job Position";
+    
+    const companyName = application.companyName || 
+                        application.jobInfo?.companyName ||
+                        application.employerID?.companyName ||
+                        "Company";
+    
+    console.log("Application found:");
+    console.log("- Job Title:", jobTitle);
+    console.log("- Company:", companyName);
+    console.log("- Applicant:", application.applicantID?.name);
+    console.log("- Education count:", application.applicantID?.education?.length || 0);
+    console.log("- Experience count:", application.applicantID?.experience?.length || 0);
+    console.log("- Projects count:", application.applicantID?.projects?.length || 0);
+    console.log("- Skills count:", application.applicantID?.skills?.length || 0);
+    
+    // Check if user is authorized to view this application
+    if (req.user.role === "Employer") {
+      if (application.employerID._id.toString() !== req.user._id.toString()) {
+        return next(new ErrorHandler("Not authorized to view this application", 403));
+      }
+    } else if (req.user.role === "Job Seeker") {
+      if (application.applicantID._id.toString() !== req.user._id.toString()) {
+        return next(new ErrorHandler("Not authorized to view this application", 403));
+      }
+    }
+    
+    // Add job info to application object for easier access
+    const enrichedApplication = {
+      ...application.toObject(),
+      jobTitle,
+      companyName
+    };
+    
+    res.status(200).json({
+      success: true,
+      application: enrichedApplication,
     });
-
-  if (!application) {
-    return next(new ErrorHandler("Application not found", 404));
+  } catch (error) {
+    console.error("Error in getApplicationById:", error);
+    return next(new ErrorHandler("Failed to fetch application", 500));
   }
-
-  // Check if the employer owns this job
-  if (req.user.role === "Employer" && application.employerID._id.toString() !== req.user._id.toString()) {
-    return next(new ErrorHandler("You are not authorized to view this application", 403));
-  }
-
-  // Check if job seeker owns this application
-  if (req.user.role === "Job Seeker" && application.applicantID._id.toString() !== req.user._id.toString()) {
-    return next(new ErrorHandler("You are not authorized to view this application", 403));
-  }
-
-  res.status(200).json({
-    success: true,
-    application,
-  });
 });
 
 // Update application status (for employers)
 export const updateApplicationStatus = catchAsyncErrors(async (req, res, next) => {
-  const { id } = req.params;
+  const { applicationId } = req.params;
   const { status } = req.body;
-
-  if (!id) {
-    return next(new ErrorHandler("Application ID is required", 400));
+  
+  console.log("Updating application:", applicationId, "to status:", status);
+  console.log("User role:", req.user.role);
+  
+  if (req.user.role !== "Employer") {
+    return next(new ErrorHandler("Only employers can update application status", 403));
   }
-
-  // Check if ID is valid MongoDB ObjectId
-  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-    return next(new ErrorHandler("Invalid application ID format", 400));
+  
+  const validStatuses = ["Pending", "Accepted", "Rejected"];
+  if (!validStatuses.includes(status)) {
+    return next(new ErrorHandler("Invalid status", 400));
   }
-
-  if (!status || !["Pending", "Accepted", "Rejected"].includes(status)) {
-    return next(new ErrorHandler("Valid status is required (Pending, Accepted, Rejected)", 400));
-  }
-
-  const application = await Application.findById(id).populate('employerID');
-
+  
+  const application = await Application.findById(applicationId);
+  
   if (!application) {
     return next(new ErrorHandler("Application not found", 404));
   }
-
-  // Check if the employer owns this job
-  if (req.user.role !== "Employer" || application.employerID._id.toString() !== req.user._id.toString()) {
-    return next(new ErrorHandler("You are not authorized to update this application", 403));
+  
+  // Check if employer owns this application
+  if (application.employerID.toString() !== req.user._id.toString()) {
+    return next(new ErrorHandler("Not authorized to update this application", 403));
   }
-
+  
   application.status = status;
   await application.save();
-
+  
+  console.log("Application status updated successfully");
+  
   res.status(200).json({
     success: true,
     message: `Application ${status.toLowerCase()} successfully`,

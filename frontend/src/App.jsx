@@ -19,6 +19,8 @@ import RoleSelection from "./components/Auth/RoleSelection";
 import UserProfile from "./components/User/UserProfile";
 import EditProfile from "./components/User/EditProfile";
 import ApplicantProfile from "./components/Application/ApplicantProfile";
+import ChatList from "./components/Chat/ChatList";
+import ChatWindow from "./components/Chat/ChatWindow";
 
 const App = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
@@ -61,6 +63,8 @@ const App = () => {
           <Route path="/select-role" element={<RoleSelection />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/messages" element={<ChatList />} />
+          <Route path="/chat/:applicationId" element={<ChatWindow />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />

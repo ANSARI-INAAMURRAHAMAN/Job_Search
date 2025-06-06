@@ -78,8 +78,14 @@ export const logout = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-export const getUser = catchAsyncErrors((req, res, next) => {
-  const user = req.user;
+export const getUser = catchAsyncErrors(async (req, res, next) => {
+  // Get complete user data including all profile fields
+  const user = await User.findById(req.user._id).select('-password');
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
   res.status(200).json({
     success: true,
     user,

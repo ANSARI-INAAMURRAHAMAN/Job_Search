@@ -15,7 +15,7 @@ router.post("/post", isAuthenticated, postApplication);
 router.get("/employer/getall", isAuthenticated, employerGetAllApplications);
 router.get("/jobseeker/getall", isAuthenticated, jobseekerGetAllApplications);
 router.delete("/delete/:id", isAuthenticated, jobseekerDeleteApplication);
-router.get("/:id", isAuthenticated, getApplicationById);
-router.put("/status/:id", isAuthenticated, updateApplicationStatus);
+router.get("/:applicationId", isAuthenticated, getApplicationById);
+router.put("/update/:applicationId", isAuthenticated, updateApplicationStatus);
 
 export default router;

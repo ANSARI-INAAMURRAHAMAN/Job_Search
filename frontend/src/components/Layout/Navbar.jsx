@@ -5,7 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { AiOutlineClose } from "react-icons/ai";
-import { FaSignOutAlt, FaUser } from "react-icons/fa";
+import { FaSignOutAlt, FaUser, FaComments } from "react-icons/fa";
 import "./Navbar.css";
 
 const Navbar = memo(() => {
@@ -39,6 +39,7 @@ const Navbar = memo(() => {
       to: "/applications/me",
       label: user?.role === "Employer" ? "Applications" : "My Applications"
     },
+    { to: "/messages", label: "Messages", icon: <FaComments /> },
     { to: "/profile", label: "Profile", icon: <FaUser /> },
     ...(user?.role === "Employer" ? [
       { to: "/job/post", label: "Post Job" },
