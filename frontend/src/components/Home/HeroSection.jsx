@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaBuilding, FaSuitcase, FaUsers, FaUserPlus } from "react-icons/fa";
 import "./HeroSection.css";
 
@@ -13,12 +14,18 @@ const StatCard = memo(({ title, subTitle, icon, index }) => (
 ));
 
 const HeroSection = memo(() => {
+  const navigate = useNavigate();
+
   const stats = [
     { title: "1,23,441", subTitle: "Live Jobs", icon: <FaSuitcase /> },
     { title: "91,220", subTitle: "Companies", icon: <FaBuilding /> },
     { title: "2,34,200", subTitle: "Job Seekers", icon: <FaUsers /> },
     { title: "1,03,761", subTitle: "Employers", icon: <FaUserPlus /> },
   ];
+
+  const handleStartJourney = () => {
+    navigate("/job/getall");
+  };
 
   return (
     <section className="hero-section">
@@ -33,7 +40,9 @@ const HeroSection = memo(() => {
               Discover job opportunities that match your skills and passions.
               Connect with employers seeking talent like yours for rewarding careers.
             </p>
-            <button className="cta-button">Start Your Journey</button>
+            <button className="cta-button" onClick={handleStartJourney}>
+              Start Your Journey
+            </button>
           </div>
           <div className="hero-image">
             <img src="/heroS.jpg" alt="Career opportunities" />
