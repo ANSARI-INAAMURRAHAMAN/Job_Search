@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Context } from "../../main";
 import { FaBriefcase, FaMapMarkerAlt, FaDollarSign, FaCalendarAlt, FaTools } from "react-icons/fa";
+import API_BASE_URL from "../../config/api";
 import "./PostJob.css";
 
 const PostJob = () => {
@@ -89,7 +90,7 @@ const PostJob = () => {
       }
 
       const res = await axios.post(
-        "http://localhost:4000/api/v1/job/post",
+        `${API_BASE_URL}/job/post`,
         jobData,
         {
           withCredentials: true,
