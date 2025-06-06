@@ -39,17 +39,16 @@ const AppContent = () => {
     const fetchUser = async () => {
       try {
         console.log("Fetching user data for regular auth check...");
+        // The axios interceptor will automatically add the token if available
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/user/getuser`,
-          {
-            withCredentials: true,
-          }
+          `${import.meta.env.VITE_BACKEND_URL}/user/getuser`
         );
         console.log("User data fetched successfully:", response.data.user?.name);
         setUser(response.data.user);
         setIsAuthorized(true);
       } catch (error) {
         console.log("No authenticated user found");
+        localStorage.removeItem("authToken"); // Clear invalid token
         setIsAuthorized(false);
       }
     };

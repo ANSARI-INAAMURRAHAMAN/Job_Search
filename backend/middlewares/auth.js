@@ -4,15 +4,22 @@ import ErrorHandler from "./error.js";
 import jwt from "jsonwebtoken";
 
 export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.cookies;
+  let token = req.cookies.token;
+  
+  // If no token in cookies, check Authorization header
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.substring(7);
+    console.log('Auth middleware - Using token from Authorization header');
+  }
   
   console.log('Auth middleware - Request path:', req.path);
   console.log('Auth middleware - All cookies:', Object.keys(req.cookies));
+  console.log('Auth middleware - Has Authorization header:', !!req.headers.authorization);
   console.log('Auth middleware - Token present:', !!token);
-  console.log('Auth middleware - Token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'no token');
+  console.log('Auth middleware - Token source:', req.cookies.token ? 'cookie' : req.headers.authorization ? 'header' : 'none');
   
   if (!token) {
-    console.log('No token found in cookies');
+    console.log('No token found in cookies or Authorization header');
     return next(new ErrorHandler("User Not Authorized", 401));
   }
   

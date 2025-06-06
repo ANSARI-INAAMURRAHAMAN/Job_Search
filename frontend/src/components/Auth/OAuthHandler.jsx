@@ -15,10 +15,10 @@ const OAuthHandler = () => {
       const authStatus = searchParams.get('auth');
       const role = searchParams.get('role');
       const name = searchParams.get('name');
+      const token = searchParams.get('token');
       const error = searchParams.get('error');
 
-      console.log('OAuth Handler - Params:', { authStatus, role, name, error });
-      console.log('Current location:', location.pathname);
+      console.log('OAuth Handler - Params:', { authStatus, role, name, token: !!token, error });
 
       if (error === 'oauth_failed') {
         toast.error('Google authentication failed. Please try again.');
@@ -30,19 +30,46 @@ const OAuthHandler = () => {
         try {
           console.log('OAuth success detected, verifying authentication...');
           
-          // Add longer delay to ensure cookie is properly set
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // If we have a token in URL, store it in localStorage as fallback
+          if (token) {
+            localStorage.setItem('authToken', token);
+            console.log('Token stored in localStorage');
+          }
           
-          // The backend has already set the cookie, now verify authentication
-          const response = await axios.get(
-            `${import.meta.env.VITE_BACKEND_URL}/user/getuser`,
-            { 
-              withCredentials: true,
-              headers: {
-                'Content-Type': 'application/json'
+          // Small delay to ensure cookie is set
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Try to verify authentication with cookies first
+          let response;
+          try {
+            response = await axios.get(
+              `${import.meta.env.VITE_BACKEND_URL}/user/getuser`,
+              { 
+                withCredentials: true,
+                headers: {
+                  'Content-Type': 'application/json'
+                }
               }
+            );
+          } catch (cookieError) {
+            console.log('Cookie authentication failed, trying with token from URL...');
+            
+            if (token) {
+              // Try with Authorization header as fallback
+              response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/user/getuser`,
+                { 
+                  withCredentials: true,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  }
+                }
+              );
+            } else {
+              throw cookieError;
             }
-          );
+          }
 
           console.log('User verification response:', response.data);
 
@@ -50,6 +77,10 @@ const OAuthHandler = () => {
             setUser(response.data.user);
             setIsAuthorized(true);
             toast.success(`Welcome back, ${name || response.data.user.name}!`);
+            
+            // Clean up URL by removing OAuth parameters
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
             
             // Navigate to appropriate page based on role
             if (response.data.user.role === 'Employer') {
@@ -61,21 +92,19 @@ const OAuthHandler = () => {
         } catch (error) {
           console.error('Failed to verify authentication:', error.response?.data || error.message);
           
-          // If still unauthorized, try to clear any stale cookies and redirect to login
+          // Clear any stored tokens
+          localStorage.removeItem('authToken');
           document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.onrender.com;';
           document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
           
           toast.error('Authentication failed. Please try logging in again.');
           navigate('/login');
         }
-      } else if (location.pathname === '/' && !authStatus) {
-        // Regular home page access, no OAuth params - do nothing, let App.jsx handle it
-        return;
       }
     };
 
     handleOAuthCallback();
-  }, [searchParams, navigate, setIsAuthorized, setUser, location.pathname]);
+  }, [searchParams, navigate, setIsAuthorized, setUser]);
 
   return (
     <div style={{

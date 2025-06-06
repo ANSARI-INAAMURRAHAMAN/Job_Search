@@ -46,8 +46,6 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
     
     console.log('Google OAuth callback - userInfo:', userInfo);
     console.log('Selected role from session:', selectedRole);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
     
     if (userInfo.needsRole) {
       // New user - store Google profile and redirect to role selection
@@ -105,25 +103,44 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
     console.log('Processing existing user:', userInfo._id, userInfo.role);
     
     const token = userInfo.getJWTToken();
-    const cookieOptions = {
-      expires: new Date(
-        Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: true, // Always secure in production
-      sameSite: "none", // Required for cross-origin
-      path: "/",
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-    };
-
-    console.log('Setting cookie for existing user with options:', cookieOptions);
-    console.log('Token length:', token ? token.length : 'no token');
     
-    res.cookie("token", token, cookieOptions);
+    // Try multiple cookie configurations for better compatibility
+    const cookieOptions = [
+      {
+        expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/",
+        domain: ".onrender.com"
+      },
+      {
+        expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        path: "/"
+      },
+      {
+        expires: new Date(Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        path: "/"
+      }
+    ];
+
+    // Set multiple cookies for better compatibility
+    cookieOptions.forEach((options, index) => {
+      const cookieName = index === 0 ? 'token' : `token${index}`;
+      res.cookie(cookieName, token, options);
+      console.log(`Setting cookie ${cookieName} with options:`, options);
+    });
     
     // Clear session data
     delete req.session.selectedRole;
     
+    // Always include token in URL as fallback
     const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(userInfo.role)}&name=${encodeURIComponent(userInfo.name)}&token=${encodeURIComponent(token)}`;
     console.log('Existing user redirect URL:', redirectUrl);
     
