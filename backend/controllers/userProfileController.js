@@ -1,237 +1,224 @@
-import { UserProfile } from "../models/userProfile.js";
-import fs from "fs";
-import path from "path";
+import { User } from "../models/userSchema.js";
+import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
+import ErrorHandler from "../middlewares/error.js";
 
 // Get user profile
-export const getUserProfile = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    
-    let profile = await UserProfile.findOne({ userId }).populate('userId', 'name email');
-    
-    if (!profile) {
-      profile = new UserProfile({
-        userId,
-        bio: "",
-        skills: [],
-        experience: [],
-        education: [],
-        projects: []
-      });
-      await profile.save();
-      await profile.populate('userId', 'name email');
-    }
-    
-    res.status(200).json({
-      success: true,
-      profile
-    });
-  } catch (error) {
-    console.log("Get Profile Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+export const getUserProfile = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  
+  const user = await User.findById(userId).select('-password');
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  res.status(200).json({
+    success: true,
+    user
+  });
+});
 
 // Update user profile
-export const updateUserProfile = async (req, res) => {
-  try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated"
-      });
+export const updateUserProfile = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  
+  console.log("Update Profile Request Body:", req.body);
+  
+  const updateData = { ...req.body };
+  
+  const user = await User.findByIdAndUpdate(
+    userId,
+    updateData,
+    {
+      new: true,
+      runValidators: true,
     }
-    
-    const userId = req.user._id;
-    
-    const profileData = {
-      bio: req.body.bio || "",
-      phone: req.body.phone || "",
-      address: req.body.address || {},
-      education: req.body.education || [],
-      skills: req.body.skills || [],
-      experience: req.body.experience || [],
-      projects: req.body.projects || []
-    };
-    
-    const profile = await UserProfile.findOneAndUpdate(
-      { userId },
-      profileData,
-      { new: true, upsert: true }
-    ).populate('userId', 'name email');
-    
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      profile
-    });
-    
-  } catch (error) {
-    console.log("Update Profile Error:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+  ).select('-password');
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  console.log("Updated User:", user);
+  
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    user,
+  });
+});
 
-// Add skill
-export const addSkill = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { name, proficiency } = req.body;
-    
-    let profile = await UserProfile.findOne({ userId });
-    
-    if (!profile) {
-      profile = new UserProfile({ userId, skills: [] });
-    }
-    
-    // Check if skill already exists
-    const existingSkill = profile.skills.find(skill => skill.name.toLowerCase() === name.toLowerCase());
-    
-    if (existingSkill) {
-      return res.status(400).json({
-        success: false,
-        message: "Skill already exists"
-      });
-    }
-    
-    profile.skills.push({ name, proficiency });
-    await profile.save();
-    
-    res.status(200).json({
-      success: true,
-      message: "Skill added successfully",
-      skills: profile.skills
-    });
-  } catch (error) {
-    console.log("Add Skill Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+// Add skill (individual skill add)
+export const addSkill = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const { name, level, category } = req.body;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  // Check if skill already exists
+  const existingSkill = user.skills.find(skill => skill.name.toLowerCase() === name.toLowerCase());
+  
+  if (existingSkill) {
+    return next(new ErrorHandler("Skill already exists", 400));
+  }
+  
+  user.skills.push({ name, level, category });
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Skill added successfully",
+    skills: user.skills
+  });
+});
 
-// Remove skill
-export const removeSkill = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { skillId } = req.params;
-    
-    const profile = await UserProfile.findOne({ userId });
-    
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: "Profile not found"
-      });
-    }
-    
-    profile.skills = profile.skills.filter(skill => skill._id.toString() !== skillId);
-    await profile.save();
-    
-    res.status(200).json({
-      success: true,
-      message: "Skill removed successfully",
-      skills: profile.skills
-    });
-  } catch (error) {
-    console.log("Remove Skill Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+// Remove skill (individual skill remove)
+export const removeSkill = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const { skillId } = req.params;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  user.skills = user.skills.filter(skill => skill._id.toString() !== skillId);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Skill removed successfully",
+    skills: user.skills
+  });
+});
 
-// Add education
-export const addEducation = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const educationData = req.body;
-    
-    let profile = await UserProfile.findOne({ userId });
-    
-    if (!profile) {
-      profile = new UserProfile({ userId, education: [] });
-    }
-    
-    profile.education.push(educationData);
-    await profile.save();
-    
-    res.status(200).json({
-      success: true,
-      message: "Education added successfully",
-      education: profile.education
-    });
-  } catch (error) {
-    console.log("Add Education Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+// Add education (individual education add)
+export const addEducation = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const educationData = req.body;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  user.education.push(educationData);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Education added successfully",
+    education: user.education
+  });
+});
 
-// Add experience
-export const addExperience = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const experienceData = req.body;
-    
-    let profile = await UserProfile.findOne({ userId });
-    
-    if (!profile) {
-      profile = new UserProfile({ userId, experience: [] });
-    }
-    
-    profile.experience.push(experienceData);
-    await profile.save();
-    
-    res.status(200).json({
-      success: true,
-      message: "Experience added successfully",
-      experience: profile.experience
-    });
-  } catch (error) {
-    console.log("Add Experience Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+// Add experience (individual experience add)
+export const addExperience = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const experienceData = req.body;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  user.experience.push(experienceData);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Experience added successfully",
+    experience: user.experience
+  });
+});
 
-// Add project
-export const addProject = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const projectData = req.body;
-    
-    let profile = await UserProfile.findOne({ userId });
-    
-    if (!profile) {
-      profile = new UserProfile({ userId, projects: [] });
-    }
-    
-    profile.projects.push(projectData);
-    await profile.save();
-    
-    res.status(200).json({
-      success: true,
-      message: "Project added successfully",
-      projects: profile.projects
-    });
-  } catch (error) {
-    console.log("Add Project Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error: " + error.message
-    });
+// Add project (individual project add)
+export const addProject = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const projectData = req.body;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
   }
-};
+  
+  user.projects.push(projectData);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Project added successfully",
+    projects: user.projects
+  });
+});
+
+// Remove education (individual education remove)
+export const removeEducation = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const { educationId } = req.params;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
+  user.education = user.education.filter(edu => edu._id.toString() !== educationId);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Education removed successfully",
+    education: user.education
+  });
+});
+
+// Remove experience (individual experience remove)
+export const removeExperience = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const { experienceId } = req.params;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
+  user.experience = user.experience.filter(exp => exp._id.toString() !== experienceId);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Experience removed successfully",
+    experience: user.experience
+  });
+});
+
+// Remove project (individual project remove)
+export const removeProject = catchAsyncErrors(async (req, res, next) => {
+  const userId = req.user._id;
+  const { projectId } = req.params;
+  
+  const user = await User.findById(userId);
+  
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+  
+  user.projects = user.projects.filter(project => project._id.toString() !== projectId);
+  await user.save();
+  
+  res.status(200).json({
+    success: true,
+    message: "Project removed successfully",
+    projects: user.projects
+  });
+});

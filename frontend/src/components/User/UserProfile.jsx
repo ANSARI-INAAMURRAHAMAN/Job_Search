@@ -1,258 +1,211 @@
-import React, { useState, useEffect } from "react";
-import { FaUser, FaEnvelope, FaMapMarkerAlt, FaGraduationCap, FaFileAlt, FaEdit, FaDownload, FaPlus, FaTimes } from "react-icons/fa";
+import React, { useContext, useEffect } from "react";
+import { Context } from "../../main";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { FaUser, FaEdit, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBriefcase, FaGraduationCap, FaCode, FaTools } from "react-icons/fa";
 import "./UserProfile.css";
 
 const UserProfile = () => {
-  const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [newSkill, setNewSkill] = useState({ name: "", proficiency: "Intermediate" });
-  const [showAddSkill, setShowAddSkill] = useState(false);
-
-  const navigate = useNavigate();
+  const { isAuthorized, user } = useContext(Context);
+  const navigateTo = useNavigate();
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await axios.get("http://localhost:4000/api/v1/user-profile", {
-        withCredentials: true
-      });
-      if (res.data.success) {
-        setProfileData(res.data.profile);
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      // Create a default profile structure if API fails
-      setProfileData({
-        userId: { name: "User", email: "" },
-        bio: "",
-        phone: "",
-        address: null,
-        education: [],
-        skills: [],
-        experience: []
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddSkill = async () => {
-    if (!newSkill.name.trim()) {
-      alert("Please enter a skill name");
+    if (!isAuthorized) {
+      navigateTo("/login");
       return;
     }
+  }, [isAuthorized, navigateTo]);
 
-    try {
-      const res = await axios.post("http://localhost:4000/api/v1/user-profile/skills", newSkill, {
-        withCredentials: true
-      });
-      if (res.data.success) {
-        setProfileData(prev => ({
-          ...prev,
-          skills: res.data.skills
-        }));
-        setNewSkill({ name: "", proficiency: "Intermediate" });
-        setShowAddSkill(false);
-        alert("Skill added successfully");
-      }
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to add skill");
-    }
-  };
-
-  const handleRemoveSkill = async (skillId) => {
-    try {
-      const res = await axios.delete(`http://localhost:4000/api/v1/user-profile/skills/${skillId}`, {
-        withCredentials: true
-      });
-      if (res.data.success) {
-        setProfileData(prev => ({
-          ...prev,
-          skills: res.data.skills
-        }));
-        alert("Skill removed successfully");
-      }
-    } catch (error) {
-      alert("Failed to remove skill");
-    }
-  };
-
-  const handleEditProfile = () => {
-    navigate("/edit-profile");
-  };
-
-  if (loading) {
-    return <div className="loading-spinner">Loading...</div>;
+  if (!isAuthorized || !user) {
+    return null;
   }
 
-  if (!profileData) {
-    return <div className="error-message">Failed to load profile</div>;
-  }
-
-  const userData = {
-    name: profileData.userId?.name || profileData.userId?.fullname || "User",
-    email: profileData.userId?.email || "",
-    phone: profileData.phone || "Not provided",
-    address: profileData.address ? 
-      `${profileData.address.street || ""}, ${profileData.address.city || ""}, ${profileData.address.state || ""} ${profileData.address.zipCode || ""}`.trim() 
-      : "Not provided",
-    college: profileData.education?.[0]?.college || "Not provided",
-    degree: profileData.education?.[0]?.degree || "Not provided",
-    graduationYear: profileData.education?.[0]?.graduationYear || "Not provided",
-    skills: profileData.skills || [],
-    bio: profileData.bio || "No bio available",
-    experience: profileData.experience || [],
-    projects: profileData.projects || []
+  const formatDate = (dateString) => {
+    if (!dateString) return "Present";
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
+    });
   };
+
+  console.log("User in profile component:", user);
 
   return (
-    <div className="user-profile-container">
-      <div className="profile-header">
-        <div className="profile-avatar">
-          <FaUser size={80} />
-        </div>
-        <div className="profile-basic-info">
-          <h1 className="profile-name">{userData.name}</h1>
-          <p className="profile-bio">{userData.bio}</p>
-          <button className="edit-profile-btn" onClick={handleEditProfile}>
-            <FaEdit /> Edit Profile
-          </button>
-        </div>
-      </div>
-
-      <div className="profile-content">
-        <div className="profile-section">
-          <h2 className="section-title">Contact Information</h2>
-          <div className="contact-grid">
-            <div className="contact-item">
-              <FaEnvelope className="contact-icon" />
-              <span>{userData.email}</span>
-            </div>
-            <div className="contact-item">
-              <FaMapMarkerAlt className="contact-icon" />
-              <span>{userData.address}</span>
-            </div>
-            <div className="contact-item">
-              <span>📞</span>
-              <span>{userData.phone}</span>
-            </div>
+    <div className="user-profile-page">
+      <div className="container">
+        {/* Profile Header */}
+        <div className="profile-header">
+          <div className="profile-avatar">
+            <FaUser />
+          </div>
+          <div className="profile-info">
+            <h1>{user.name}</h1>
+            <p className="role">{user.role}</p>
+            <p className="member-since">Member since {formatDate(user.createdAt)}</p>
+          </div>
+          <div className="profile-actions">
+            <Link to="/edit-profile" className="edit-btn">
+              <FaEdit />
+              Edit Profile
+            </Link>
           </div>
         </div>
 
-        <div className="profile-section">
-          <h2 className="section-title">Education</h2>
-          <div className="education-info">
-            <div className="education-item">
-              <FaGraduationCap className="education-icon" />
-              <div>
-                <h3>{userData.degree}</h3>
-                <p>{userData.college}</p>
-                <span className="graduation-year">Graduated: {userData.graduationYear}</span>
+        {/* Profile Content */}
+        <div className="profile-content">
+          {/* Basic Information */}
+          <div className="section">
+            <h2>Contact Information</h2>
+            <div className="info-grid">
+              <div className="info-item">
+                <FaEnvelope className="icon" />
+                <div>
+                  <label>Email</label>
+                  <p>{user.email}</p>
+                </div>
               </div>
+              <div className="info-item">
+                <FaPhone className="icon" />
+                <div>
+                  <label>Phone</label>
+                  <p>{user.phone}</p>
+                </div>
+              </div>
+              {user.location && (user.location.city || user.location.country) && (
+                <div className="info-item">
+                  <FaMapMarkerAlt className="icon" />
+                  <div>
+                    <label>Location</label>
+                    <p>{user.location.city}{user.location.city && user.location.country && ", "}{user.location.country}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="profile-section">
-          <h2 className="section-title">
-            Skills
-            <button 
-              className="add-skill-btn"
-              onClick={() => setShowAddSkill(!showAddSkill)}
-            >
-              <FaPlus />
-            </button>
-          </h2>
-          
-          {showAddSkill && (
-            <div className="add-skill-form">
-              <input
-                type="text"
-                placeholder="Enter skill name"
-                value={newSkill.name}
-                onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
-                className="skill-input"
-              />
-              <select
-                value={newSkill.proficiency}
-                onChange={(e) => setNewSkill({...newSkill, proficiency: e.target.value})}
-                className="proficiency-select"
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Expert">Expert</option>
-              </select>
-              <button onClick={handleAddSkill} className="save-skill-btn">Add</button>
+          {/* Bio Section */}
+          {user.bio && (
+            <div className="section">
+              <h2>About</h2>
+              <p className="bio">{user.bio}</p>
             </div>
           )}
-          
-          <div className="skills-container">
-            {userData.skills.map((skill, index) => (
-              <span key={skill._id || index} className="skill-tag">
-                {skill.name || skill}
-                {skill._id && (
-                  <button
-                    className="remove-skill-btn"
-                    onClick={() => handleRemoveSkill(skill._id)}
-                  >
-                    <FaTimes size={12} />
-                  </button>
-                )}
-                {skill.proficiency && (
-                  <span className="skill-proficiency">{skill.proficiency}</span>
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
 
-        <div className="profile-section">
-          <h2 className="section-title">Projects</h2>
-          <div className="projects-container">
-            {userData.projects.map((project, index) => (
-              <div key={index} className="project-item">
-                <h3>{project.title}</h3>
-                <p className="project-tech">Technologies: {project.technologies}</p>
-                <p className="project-desc">{project.description}</p>
-                <div className="project-links">
-                  {project.liveUrl && (
-                    <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                      Live Demo
-                    </a>
-                  )}
-                  {project.githubUrl && (
-                    <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-                      GitHub
-                    </a>
-                  )}
-                </div>
-                {project.startDate && (
-                  <span className="project-duration">
-                    {project.startDate} - {project.endDate || "Present"}
-                  </span>
-                )}
+          {/* Work Experience */}
+          <div className="section">
+            <h2><FaBriefcase /> Work Experience</h2>
+            {user.experience && user.experience.length > 0 ? (
+              <div className="experience-list">
+                {user.experience.map((exp, index) => (
+                  <div key={index} className="experience-item">
+                    <h3>{exp.jobTitle}</h3>
+                    <p className="company">{exp.company} • {exp.location}</p>
+                    <p className="duration">
+                      {formatDate(exp.startDate)} - {exp.isCurrentJob ? "Present" : formatDate(exp.endDate)}
+                    </p>
+                    {exp.description && <p className="description">{exp.description}</p>}
+                    {exp.skills && exp.skills.length > 0 && (
+                      <div className="skills-tags">
+                        {exp.skills.map((skill, skillIndex) => (
+                          <span key={skillIndex} className="skill-tag">{skill}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="empty-section">
+                <p>No work experience added yet.</p>
+                <Link to="/edit-profile" className="add-btn">Add Experience</Link>
+              </div>
+            )}
           </div>
-        </div>
 
-        <div className="profile-section">
-          <h2 className="section-title">Experience</h2>
-          <div className="experience-container">
-            {userData.experience.map((exp, index) => (
-              <div key={index} className="experience-item">
-                <h3>{exp.position}</h3>
-                <h4>{exp.company}</h4>
-                <span className="experience-duration">{exp.duration}</span>
-                <p>{exp.description}</p>
+          {/* Education */}
+          <div className="section">
+            <h2><FaGraduationCap /> Education</h2>
+            {user.education && user.education.length > 0 ? (
+              <div className="education-list">
+                {user.education.map((edu, index) => (
+                  <div key={index} className="education-item">
+                    <h3>{edu.degree}</h3>
+                    <p className="institution">{edu.institution}</p>
+                    {edu.fieldOfStudy && <p className="field">Field: {edu.fieldOfStudy}</p>}
+                    <p className="duration">
+                      {formatDate(edu.startDate)} - {formatDate(edu.endDate)}
+                    </p>
+                    {edu.grade && <p className="grade">Grade: {edu.grade}</p>}
+                    {edu.description && <p className="description">{edu.description}</p>}
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="empty-section">
+                <p>No education details added yet.</p>
+                <Link to="/edit-profile" className="add-btn">Add Education</Link>
+              </div>
+            )}
+          </div>
+
+          {/* Projects */}
+          <div className="section">
+            <h2><FaCode /> Projects</h2>
+            {user.projects && user.projects.length > 0 ? (
+              <div className="projects-grid">
+                {user.projects.map((project, index) => (
+                  <div key={index} className="project-card">
+                    <h3>{project.title}</h3>
+                    {project.description && <p className="description">{project.description}</p>}
+                    {project.technologies && project.technologies.length > 0 && (
+                      <div className="tech-tags">
+                        {project.technologies.map((tech, techIndex) => (
+                          <span key={techIndex} className="tech-tag">{tech}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="project-links">
+                      {project.projectUrl && (
+                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer">
+                          Live Demo
+                        </a>
+                      )}
+                      {project.githubUrl && (
+                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                          GitHub
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-section">
+                <p>No projects added yet.</p>
+                <Link to="/edit-profile" className="add-btn">Add Projects</Link>
+              </div>
+            )}
+          </div>
+
+          {/* Skills */}
+          <div className="section">
+            <h2><FaTools /> Skills</h2>
+            {user.skills && user.skills.length > 0 ? (
+              <div className="skills-grid">
+                {user.skills.map((skill, index) => (
+                  <div key={index} className="skill-item">
+                    <span className="skill-name">{skill.name}</span>
+                    <span className={`skill-level ${skill.level?.toLowerCase()}`}>
+                      {skill.level}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-section">
+                <p>No skills added yet.</p>
+                <Link to="/edit-profile" className="add-btn">Add Skills</Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

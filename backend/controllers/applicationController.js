@@ -1,9 +1,10 @@
-import { catchAsyncErrors } from "../middlewares/catchAsyncError.js";
+import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
 import { Application } from "../models/applicationSchema.js";
 import { Job } from "../models/jobSchema.js";
 import cloudinary from "cloudinary";
 
+// Post Application
 export const postApplication = catchAsyncErrors(async (req, res, next) => {
   const { role } = req.user;
   if (role === "Employer") {
@@ -17,88 +18,67 @@ export const postApplication = catchAsyncErrors(async (req, res, next) => {
   }
 
   const { resume } = req.files;
-  const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
+  const allowedFormats = ["image/png", "image/jpeg", "image/webp", "image/jpg"];
   if (!allowedFormats.includes(resume.mimetype)) {
     return next(
-      new ErrorHandler("Invalid file type. Please upload a PNG, JPEG, or WEBP file.", 400)
+      new ErrorHandler("Invalid file type. Please upload a PNG, JPG, or WEBP image.", 400)
     );
   }
+
+  const cloudinaryResponse = await cloudinary.uploader.upload(
+    resume.tempFilePath
+  );
+
+  if (!cloudinaryResponse || cloudinaryResponse.error) {
+    console.error(
+      "Cloudinary Error:",
+      cloudinaryResponse.error || "Unknown Cloudinary error"
+    );
+    return next(new ErrorHandler("Failed to upload Resume to Cloudinary", 500));
+  }
+
+  const { name, email, coverLetter, phone, address, jobId } = req.body;
   
-  try {
-    const cloudinaryResponse = await cloudinary.uploader.upload(
-      resume.tempFilePath
-    );
-
-    if (!cloudinaryResponse || cloudinaryResponse.error) {
-      console.error(
-        "Cloudinary Error:",
-        cloudinaryResponse.error || "Unknown Cloudinary error"
-      );
-      return next(new ErrorHandler("Failed to upload Resume to Cloudinary", 500));
-    }
-    
-    const { name, email, coverLetter, phone, address, jobId } = req.body;
-    const applicantID = {
-      user: req.user._id,
-      role: "Job Seeker",
-    };
-    
-    if (!jobId) {
-      return next(new ErrorHandler("Job not found!", 404));
-    }
-    
-    const jobDetails = await Job.findById(jobId);
-    if (!jobDetails) {
-      return next(new ErrorHandler("Job not found!", 404));
-    }
-
-    const employerID = {
-      user: jobDetails.postedBy,
-      role: "Employer",
-    };
-    
-    if (
-      !name ||
-      !email ||
-      !coverLetter ||
-      !phone ||
-      !address ||
-      !applicantID ||
-      !employerID ||
-      !resume
-    ) {
-      return next(new ErrorHandler("Please fill all fields.", 400));
-    }
-    
-    const application = await Application.create({
-      name,
-      email,
-      coverLetter,
-      phone,
-      address,
-      applicantID,
-      employerID,
-      resume: {
-        public_id: cloudinaryResponse.public_id,
-        url: cloudinaryResponse.secure_url,
-      },
-    });
-    
-    res.status(200).json({
-      success: true,
-      message: "Application Submitted!",
-      application,
-    });
-  } catch (error) {
-    // Handle Cloudinary specific errors
-    if (error.message && error.message.includes("api_key")) {
-      console.error("Cloudinary API key error:", error.message);
-      return next(new ErrorHandler("File upload service configuration error", 500));
-    }
-    
-    // Handle any other errors
-    return next(error);
+  if (!jobId) {
+    return next(new ErrorHandler("Job not found!", 404));
   }
+
+  const jobDetails = await Job.findById(jobId);
+  if (!jobDetails) {
+    return next(new ErrorHandler("Job not found!", 404));
+  }
+
+  if (
+    !name ||
+    !email ||
+    !coverLetter ||
+    !phone ||
+    !address ||
+    !resume
+  ) {
+    return next(new ErrorHandler("Please fill all fields.", 400));
+  }
+
+  const application = await Application.create({
+    name,
+    email,
+    coverLetter,
+    phone,
+    address,
+    applicantID: req.user._id,
+    employerID: jobDetails.postedBy,
+    jobId,
+    resume: {
+      public_id: cloudinaryResponse.public_id,
+      url: cloudinaryResponse.secure_url,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Application Submitted!",
+    application,
+  });
 });
 
 export const employerGetAllApplications = catchAsyncErrors(
@@ -110,7 +90,11 @@ export const employerGetAllApplications = catchAsyncErrors(
       );
     }
     const { _id } = req.user;
-    const applications = await Application.find({ "employerID.user": _id });
+    const applications = await Application.find({ employerID: _id })
+      .populate({
+        path: "jobId",
+        select: "title category"
+      });
     res.status(200).json({
       success: true,
       applications,
@@ -127,7 +111,11 @@ export const jobseekerGetAllApplications = catchAsyncErrors(
       );
     }
     const { _id } = req.user;
-    const applications = await Application.find({ "applicantID.user": _id });
+    const applications = await Application.find({ applicantID: _id })
+      .populate({
+        path: "jobId",
+        select: "title category"
+      });
     res.status(200).json({
       success: true,
       applications,
@@ -155,3 +143,89 @@ export const jobseekerDeleteApplication = catchAsyncErrors(
     });
   }
 );
+
+// Get single application with applicant details (for employers)
+export const getApplicationById = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  
+  if (!id) {
+    return next(new ErrorHandler("Application ID is required", 400));
+  }
+
+  // Check if ID is valid MongoDB ObjectId
+  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new ErrorHandler("Invalid application ID format", 400));
+  }
+
+  const application = await Application.findById(id)
+    .populate({
+      path: "applicantID",
+      select: "name email phone role createdAt"
+    })
+    .populate({
+      path: "jobId",
+      select: "title category"
+    })
+    .populate({
+      path: "employerID",
+      select: "name email"
+    });
+
+  if (!application) {
+    return next(new ErrorHandler("Application not found", 404));
+  }
+
+  // Check if the employer owns this job
+  if (req.user.role === "Employer" && application.employerID._id.toString() !== req.user._id.toString()) {
+    return next(new ErrorHandler("You are not authorized to view this application", 403));
+  }
+
+  // Check if job seeker owns this application
+  if (req.user.role === "Job Seeker" && application.applicantID._id.toString() !== req.user._id.toString()) {
+    return next(new ErrorHandler("You are not authorized to view this application", 403));
+  }
+
+  res.status(200).json({
+    success: true,
+    application,
+  });
+});
+
+// Update application status (for employers)
+export const updateApplicationStatus = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!id) {
+    return next(new ErrorHandler("Application ID is required", 400));
+  }
+
+  // Check if ID is valid MongoDB ObjectId
+  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new ErrorHandler("Invalid application ID format", 400));
+  }
+
+  if (!status || !["Pending", "Accepted", "Rejected"].includes(status)) {
+    return next(new ErrorHandler("Valid status is required (Pending, Accepted, Rejected)", 400));
+  }
+
+  const application = await Application.findById(id).populate('employerID');
+
+  if (!application) {
+    return next(new ErrorHandler("Application not found", 404));
+  }
+
+  // Check if the employer owns this job
+  if (req.user.role !== "Employer" || application.employerID._id.toString() !== req.user._id.toString()) {
+    return next(new ErrorHandler("You are not authorized to update this application", 403));
+  }
+
+  application.status = status;
+  await application.save();
+
+  res.status(200).json({
+    success: true,
+    message: `Application ${status.toLowerCase()} successfully`,
+    application,
+  });
+});

@@ -10,15 +10,15 @@ const applicationSchema = new mongoose.Schema({
   },
   email: {
     type: String,
+    validator: [validator.isEmail, "Please enter a valid Email!"],
     required: [true, "Please enter your Email!"],
-    validate: [validator.isEmail, "Please provide a valid Email!"],
   },
   coverLetter: {
     type: String,
-    required: [true, "Please provide a cover letter!"],
+    required: [true, "Please enter your Cover Letter!"],
   },
   phone: {
-    type: Number,
+    type: String,
     required: [true, "Please enter your Phone Number!"],
   },
   address: {
@@ -27,38 +27,37 @@ const applicationSchema = new mongoose.Schema({
   },
   resume: {
     public_id: {
-      type: String, 
+      type: String,
       required: true,
     },
     url: {
-      type: String, 
+      type: String,
       required: true,
     },
   },
   applicantID: {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["Job Seeker"],
-      required: true,
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
   employerID: {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["Employer"],
-      required: true,
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
+  jobId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Job",
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ["Pending", "Accepted", "Rejected"],
+    default: "Pending",
+  },
+},
+{
+  timestamps: true,
 });
 
 export const Application = mongoose.model("Application", applicationSchema);

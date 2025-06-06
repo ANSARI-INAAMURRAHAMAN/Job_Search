@@ -1,4 +1,4 @@
-import { catchAsyncErrors } from "../middlewares/catchAsyncError.js";
+import { catchAsyncErrors } from "../middlewares/catchAsyncErrors.js";
 import { Job } from "../models/jobSchema.js";
 import ErrorHandler from "../middlewares/error.js";
 
@@ -27,9 +27,22 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
     fixedSalary,
     salaryFrom,
     salaryTo,
+    requiredSkills,
+    jobRole,
+    isRemote,
+    applicationDeadline,
   } = req.body;
 
-  if (!title || !description || !category || !country || !city || !location) {
+  if (
+    !title ||
+    !description ||
+    !category ||
+    !country ||
+    !city ||
+    !location ||
+    !jobRole ||
+    !applicationDeadline
+  ) {
     return next(new ErrorHandler("Please provide full job details.", 400));
   }
 
@@ -47,6 +60,13 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Cannot Enter Fixed and Ranged Salary together.", 400)
     );
   }
+
+  if (!requiredSkills || requiredSkills.length === 0) {
+    return next(
+      new ErrorHandler("Please provide at least one required skill.", 400)
+    );
+  }
+
   const postedBy = req.user._id;
   const job = await Job.create({
     title,
@@ -59,7 +79,15 @@ export const postJob = catchAsyncErrors(async (req, res, next) => {
     salaryFrom,
     salaryTo,
     postedBy,
+    requiredSkills: Array.isArray(requiredSkills)
+      ? requiredSkills
+      : [requiredSkills],
+    jobRole,
+    isRemote: isRemote === true || isRemote === "true",
+    applicationDeadline: new Date(applicationDeadline),
+    jobPostedOn: new Date(),
   });
+
   res.status(200).json({
     success: true,
     message: "Job Posted Successfully!",
@@ -88,19 +116,69 @@ export const updateJob = catchAsyncErrors(async (req, res, next) => {
       new ErrorHandler("Job Seeker not allowed to access this resource.", 400)
     );
   }
+  
   const { id } = req.params;
   let job = await Job.findById(id);
+  
   if (!job) {
-    return next(new ErrorHandler("OOPS! Job not found.", 404));
+    return next(new ErrorHandler("Job not found.", 404));
   }
-  job = await Job.findByIdAndUpdate(id, req.body, {
+
+  // Check if the user is the owner of the job
+  if (job.postedBy.toString() !== req.user._id.toString()) {
+    return next(
+      new ErrorHandler("You are not authorized to update this job.", 403)
+    );
+  }
+  
+  const {
+    title,
+    description,
+    category,
+    country,
+    city,
+    location,
+    fixedSalary,
+    salaryFrom,
+    salaryTo,
+    requiredSkills,
+    jobRole,
+    isRemote,
+    applicationDeadline
+  } = req.body;
+
+  // Validate required skills
+  if (requiredSkills && Array.isArray(requiredSkills) && requiredSkills.length === 0) {
+    return next(new ErrorHandler("Please provide at least one required skill.", 400));
+  }
+
+  // Prepare update data
+  const updateData = {};
+  
+  if (title) updateData.title = title;
+  if (description) updateData.description = description;
+  if (category) updateData.category = category;
+  if (country) updateData.country = country;
+  if (city) updateData.city = city;
+  if (location) updateData.location = location;
+  if (fixedSalary) updateData.fixedSalary = fixedSalary;
+  if (salaryFrom) updateData.salaryFrom = salaryFrom;
+  if (salaryTo) updateData.salaryTo = salaryTo;
+  if (requiredSkills) updateData.requiredSkills = Array.isArray(requiredSkills) ? requiredSkills : [requiredSkills];
+  if (jobRole) updateData.jobRole = jobRole;
+  if (typeof isRemote !== 'undefined') updateData.isRemote = isRemote === true || isRemote === "true";
+  if (applicationDeadline) updateData.applicationDeadline = new Date(applicationDeadline);
+
+  job = await Job.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
     useFindAndModify: false,
   });
+
   res.status(200).json({
     success: true,
-    message: "Job Updated!",
+    message: "Job Updated Successfully!",
+    job
   });
 });
 

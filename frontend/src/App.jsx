@@ -1,5 +1,4 @@
 import React, { useContext, useEffect } from "react";
-import "./App.css";
 import { Context } from "./main";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./components/Auth/Login";
@@ -19,9 +18,11 @@ import MyJobs from "./components/Job/MyJobs";
 import RoleSelection from "./components/Auth/RoleSelection";
 import UserProfile from "./components/User/UserProfile";
 import EditProfile from "./components/User/EditProfile";
+import ApplicantProfile from "./components/Application/ApplicantProfile";
 
 const App = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -34,11 +35,13 @@ const App = () => {
         setUser(response.data.user);
         setIsAuthorized(true);
       } catch (error) {
+        console.log("Auth check failed:", error.response?.data?.message);
         setIsAuthorized(false);
+        setUser(null);
       }
     };
     fetchUser();
-  }, [isAuthorized]);
+  }, [setIsAuthorized, setUser]);
 
   return (
     <>
@@ -52,6 +55,7 @@ const App = () => {
           <Route path="/job/:id" element={<JobDetails />} />
           <Route path="/application/:id" element={<Application />} />
           <Route path="/applications/me" element={<MyApplications />} />
+          <Route path="/applicant/:applicationId" element={<ApplicantProfile />} />
           <Route path="/job/post" element={<PostJob />} />
           <Route path="/job/me" element={<MyJobs />} />
           <Route path="/select-role" element={<RoleSelection />} />

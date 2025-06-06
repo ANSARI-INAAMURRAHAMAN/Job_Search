@@ -34,6 +34,179 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+
+  // Professional Information
+  experience: [
+    {
+      jobTitle: {
+        type: String,
+        required: false,
+      },
+      company: {
+        type: String,
+        required: false,
+      },
+      location: {
+        type: String,
+        required: false,
+      },
+      startDate: {
+        type: Date,
+        required: false,
+      },
+      endDate: {
+        type: Date,
+        required: false,
+      },
+      isCurrentJob: {
+        type: Boolean,
+        default: false,
+      },
+      description: {
+        type: String,
+        required: false,
+      },
+      skills: [
+        {
+          type: String,
+        },
+      ],
+    },
+  ],
+
+  education: [
+    {
+      degree: {
+        type: String,
+        required: false,
+      },
+      institution: {
+        type: String,
+        required: false,
+      },
+      fieldOfStudy: {
+        type: String,
+        required: false,
+      },
+      startDate: {
+        type: Date,
+        required: false,
+      },
+      endDate: {
+        type: Date,
+        required: false,
+      },
+      grade: {
+        type: String,
+        required: false,
+      },
+      description: {
+        type: String,
+        required: false,
+      },
+    },
+  ],
+
+  projects: [
+    {
+      title: {
+        type: String,
+        required: false,
+      },
+      description: {
+        type: String,
+        required: false,
+      },
+      technologies: [
+        {
+          type: String,
+        },
+      ],
+      startDate: {
+        type: Date,
+        required: false,
+      },
+      endDate: {
+        type: Date,
+        required: false,
+      },
+      projectUrl: {
+        type: String,
+        required: false,
+      },
+      githubUrl: {
+        type: String,
+        required: false,
+      },
+      status: {
+        type: String,
+        enum: ["In Progress", "Completed", "On Hold"],
+        default: "Completed",
+      },
+    },
+  ],
+
+  skills: [
+    {
+      name: {
+        type: String,
+        required: false,
+      },
+      level: {
+        type: String,
+        enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+        default: "Intermediate",
+      },
+      category: {
+        type: String,
+        enum: [
+          "Programming",
+          "Framework",
+          "Database",
+          "Tool",
+          "Soft Skill",
+          "Other",
+        ],
+        default: "Other",
+      },
+    },
+  ],
+
+  // Additional Profile Information
+  bio: {
+    type: String,
+    maxLength: [500, "Bio cannot exceed 500 characters"],
+  },
+
+  location: {
+    city: String,
+    country: String,
+  },
+
+  socialLinks: {
+    linkedin: String,
+    github: String,
+    portfolio: String,
+    twitter: String,
+  },
+
+  availability: {
+    type: String,
+    enum: ["Available", "Not Available", "Open to Opportunities"],
+    default: "Available",
+  },
+
+  expectedSalary: {
+    min: Number,
+    max: Number,
+    currency: {
+      type: String,
+      default: "USD",
+    },
+  },
+},
+{
+  timestamps: true,
 });
 
 

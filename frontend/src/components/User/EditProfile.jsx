@@ -1,653 +1,624 @@
-import React, { useState, useEffect } from "react";
-import { FaPlus, FaTimes, FaSave, FaArrowLeft } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useState, useEffect } from "react";
+import { Context } from "../../main";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { FaSave, FaPlus, FaTrash } from "react-icons/fa";
 import "./EditProfile.css";
 
 const EditProfile = () => {
-  const navigate = useNavigate();
+  const { isAuthorized, user, setUser } = useContext(Context);
   const [loading, setLoading] = useState(false);
-  const [profileData, setProfileData] = useState({
-    bio: "",
+  const navigateTo = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
     phone: "",
-    address: {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: ""
-    },
+    bio: "",
+    location: { city: "", country: "" },
+    experience: [],
     education: [],
     skills: [],
-    experience: [],
     projects: []
   });
 
-  const [newEducation, setNewEducation] = useState({
-    degree: "",
-    college: "",
-    graduationYear: "",
-    fieldOfStudy: "",
-    percentage: ""
-  });
-
-  const [newExperience, setNewExperience] = useState({
-    company: "",
-    position: "",
-    startDate: "",
-    endDate: "",
-    description: "",
-    isCurrentJob: false
-  });
-
-  const [newProject, setNewProject] = useState({
-    title: "",
-    description: "",
-    technologies: "",
-    liveUrl: "",
-    githubUrl: "",
-    startDate: "",
-    endDate: ""
-  });
-
-  const [newSkill, setNewSkill] = useState({
-    name: "",
-    proficiency: "Intermediate"
-  });
-
-  const [showAddEducation, setShowAddEducation] = useState(false);
-  const [showAddExperience, setShowAddExperience] = useState(false);
-  const [showAddProject, setShowAddProject] = useState(false);
-  const [showAddSkill, setShowAddSkill] = useState(false);
-
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (!isAuthorized) {
+      navigateTo("/login");
+      return;
+    }
 
-  const fetchProfile = async () => {
-    try {
-      const res = await axios.get("http://localhost:4000/api/v1/user-profile", {
-        withCredentials: true
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        bio: user.bio || "",
+        location: user.location || { city: "", country: "" },
+        experience: user.experience || [],
+        education: user.education || [],
+        skills: user.skills || [],
+        projects: user.projects || []
       });
-      if (res.data.success) {
-        const profile = res.data.profile;
-        setProfileData({
-          bio: profile.bio || "",
-          phone: profile.phone || "",
-          address: profile.address || {
-            street: "",
-            city: "",
-            state: "",
-            zipCode: "",
-            country: ""
-          },
-          education: profile.education || [],
-          skills: profile.skills || [],
-          experience: profile.experience || [],
-          projects: profile.projects || []
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      toast.error("Failed to fetch profile data");
     }
+  }, [isAuthorized, user, navigateTo]);
+
+  const handleBasicChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleBasicInfoChange = (field, value) => {
-    setProfileData(prev => ({
+  const handleLocationChange = (field, value) => {
+    setFormData(prev => ({
       ...prev,
-      [field]: value
+      location: { ...prev.location, [field]: value }
     }));
   };
 
-  const handleAddressChange = (field, value) => {
-    setProfileData(prev => ({
-      ...prev,
-      address: {
-        ...prev.address,
-        [field]: value
-      }
-    }));
-  };
-
-  const addEducation = () => {
-    if (!newEducation.degree || !newEducation.college) {
-      alert("Please fill in degree and college fields");
-      return;
-    }
-    setProfileData(prev => ({
-      ...prev,
-      education: [...prev.education, { ...newEducation, id: Date.now() }]
-    }));
-    setNewEducation({
-      degree: "",
-      college: "",
-      graduationYear: "",
-      fieldOfStudy: "",
-      percentage: ""
-    });
-    setShowAddEducation(false);
-  };
-
-  const removeEducation = (index) => {
-    setProfileData(prev => ({
-      ...prev,
-      education: prev.education.filter((_, i) => i !== index)
-    }));
-  };
-
+  // Experience functions
   const addExperience = () => {
-    if (!newExperience.company || !newExperience.position) {
-      alert("Please fill in company and position fields");
-      return;
-    }
-    setProfileData(prev => ({
-      ...prev,
-      experience: [...prev.experience, { ...newExperience, id: Date.now() }]
-    }));
-    setNewExperience({
+    const newExp = {
+      jobTitle: "",
       company: "",
-      position: "",
+      location: "",
       startDate: "",
       endDate: "",
+      isCurrentJob: false,
       description: "",
-      isCurrentJob: false
-    });
-    setShowAddExperience(false);
+      skills: []
+    };
+    setFormData(prev => ({
+      ...prev,
+      experience: [...prev.experience, newExp]
+    }));
+  };
+
+  const updateExperience = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      experience: prev.experience.map((exp, i) => 
+        i === index ? { ...exp, [field]: value } : exp
+      )
+    }));
   };
 
   const removeExperience = (index) => {
-    setProfileData(prev => ({
+    setFormData(prev => ({
       ...prev,
       experience: prev.experience.filter((_, i) => i !== index)
     }));
   };
 
-  const addProject = () => {
-    if (!newProject.title || !newProject.description) {
-      alert("Please fill in title and description fields");
-      return;
-    }
-    setProfileData(prev => ({
-      ...prev,
-      projects: [...prev.projects, { ...newProject, id: Date.now() }]
-    }));
-    setNewProject({
-      title: "",
-      description: "",
-      technologies: "",
-      liveUrl: "",
-      githubUrl: "",
+  // Education functions
+  const addEducation = () => {
+    const newEdu = {
+      degree: "",
+      institution: "",
+      fieldOfStudy: "",
       startDate: "",
-      endDate: ""
-    });
-    setShowAddProject(false);
-  };
-
-  const removeProject = (index) => {
-    setProfileData(prev => ({
+      endDate: "",
+      grade: "",
+      description: ""
+    };
+    setFormData(prev => ({
       ...prev,
-      projects: prev.projects.filter((_, i) => i !== index)
+      education: [...prev.education, newEdu]
     }));
   };
 
+  const updateEducation = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      education: prev.education.map((edu, i) => 
+        i === index ? { ...edu, [field]: value } : edu
+      )
+    }));
+  };
+
+  const removeEducation = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      education: prev.education.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Skills functions
   const addSkill = () => {
-    if (!newSkill.name) {
-      alert("Please enter a skill name");
-      return;
-    }
-    const skillExists = profileData.skills.some(
-      skill => skill.name.toLowerCase() === newSkill.name.toLowerCase()
-    );
-    if (skillExists) {
-      alert("Skill already exists");
-      return;
-    }
-    setProfileData(prev => ({
+    const newSkill = {
+      name: '',
+      level: 'Intermediate',
+      category: 'Other'
+    };
+    setFormData(prev => ({
       ...prev,
-      skills: [...prev.skills, { ...newSkill, id: Date.now() }]
+      skills: [...prev.skills, newSkill]
     }));
-    setNewSkill({
-      name: "",
-      proficiency: "Intermediate"
-    });
-    setShowAddSkill(false);
+  };
+
+  const updateSkill = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      skills: prev.skills.map((skill, i) => 
+        i === index ? { ...skill, [field]: value } : skill
+      )
+    }));
   };
 
   const removeSkill = (index) => {
-    setProfileData(prev => ({
+    setFormData(prev => ({
       ...prev,
       skills: prev.skills.filter((_, i) => i !== index)
     }));
   };
 
-  const saveProfile = async () => {
-    if (loading) return;
-    
-    setLoading(true);
-    try {
-      const profileDataToSend = {
-        bio: profileData.bio || "",
-        phone: profileData.phone || "",
-        address: profileData.address || {},
-        education: profileData.education || [],
-        skills: profileData.skills || [],
-        experience: profileData.experience || [],
-        projects: profileData.projects || []
-      };
+  // Projects functions
+  const addProject = () => {
+    const newProject = {
+      title: '',
+      description: '',
+      technologies: [],
+      startDate: '',
+      endDate: '',
+      projectUrl: '',
+      githubUrl: '',
+      status: 'Completed'
+    };
+    setFormData(prev => ({
+      ...prev,
+      projects: [...prev.projects, newProject]
+    }));
+  };
 
-      const response = await axios.put(
-        "http://localhost:4000/api/v1/user-profile/update",
-        profileDataToSend,
-        {
-          withCredentials: true,
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          timeout: 10000
-        }
+  const updateProject = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      projects: prev.projects.map((project, i) => 
+        i === index ? { ...project, [field]: value } : project
+      )
+    }));
+  };
+
+  const removeProject = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      projects: prev.projects.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateProjectTechnologies = (projectIndex, techString) => {
+    const techArray = techString.split(',').map(tech => tech.trim()).filter(tech => tech.length > 0);
+    updateProject(projectIndex, 'technologies', techArray);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      console.log("Submitting form data:", formData);
+      
+      const { data } = await axios.put(
+        "http://localhost:4000/api/v1/user/update-profile",
+        formData,
+        { withCredentials: true }
       );
 
-      if (response.data.success) {
-        toast.success(response.data.message || "Profile updated successfully");
-        navigate("/profile");
-      } else {
-        throw new Error(response.data.message || "Failed to update profile");
-      }
+      toast.success(data.message);
+      setUser(data.user);
+      navigateTo("/profile");
     } catch (error) {
-      let errorMessage = "Failed to update profile";
-      
-      if (error.response) {
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-      } else if (error.request) {
-        errorMessage = "Network error. Please check your connection.";
-      } else {
-        errorMessage = error.message;
-      }
-      
-      toast.error(errorMessage);
+      console.error("Profile update error:", error);
+      toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="edit-profile-container">
-      <div className="edit-profile-header">
-        <Link to="/profile" className="back-btn">
-          <FaArrowLeft /> Back to Profile
-        </Link>
-        <h1>Edit Profile</h1>
-        <button onClick={saveProfile} className="save-btn" disabled={loading}>
-          <FaSave /> {loading ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
+  if (!isAuthorized) {
+    return null;
+  }
 
-      <div className="edit-profile-content">
-        {/* Basic Information */}
-        <div className="edit-section">
-          <h2>Basic Information</h2>
-          <div className="form-grid">
+  return (
+    <div className="edit-profile-page">
+      <div className="container">
+        <h1>Edit Profile</h1>
+        
+        <form onSubmit={handleSubmit} className="profile-form">
+          {/* Basic Information */}
+          <div className="form-section">
+            <h2>Basic Information</h2>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleBasicChange('name', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleBasicChange('email', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleBasicChange('phone', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
             <div className="form-group">
               <label>Bio</label>
               <textarea
-                value={profileData.bio}
-                onChange={(e) => handleBasicInfoChange("bio", e.target.value)}
+                value={formData.bio}
+                onChange={(e) => handleBasicChange('bio', e.target.value)}
+                rows="4"
                 placeholder="Tell us about yourself..."
-                rows={4}
-              />
-            </div>
-            <div className="form-group">
-              <label>Phone</label>
-              <input
-                type="tel"
-                value={profileData.phone}
-                onChange={(e) => handleBasicInfoChange("phone", e.target.value)}
-                placeholder="Your phone number"
               />
             </div>
           </div>
-        </div>
 
-        {/* Address */}
-        <div className="edit-section">
-          <h2>Address</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Street</label>
-              <input
-                type="text"
-                value={profileData.address.street}
-                onChange={(e) => handleAddressChange("street", e.target.value)}
-                placeholder="Street address"
-              />
-            </div>
-            <div className="form-group">
-              <label>City</label>
-              <input
-                type="text"
-                value={profileData.address.city}
-                onChange={(e) => handleAddressChange("city", e.target.value)}
-                placeholder="City"
-              />
-            </div>
-            <div className="form-group">
-              <label>State</label>
-              <input
-                type="text"
-                value={profileData.address.state}
-                onChange={(e) => handleAddressChange("state", e.target.value)}
-                placeholder="State"
-              />
-            </div>
-            <div className="form-group">
-              <label>Zip Code</label>
-              <input
-                type="text"
-                value={profileData.address.zipCode}
-                onChange={(e) => handleAddressChange("zipCode", e.target.value)}
-                placeholder="Zip code"
-              />
-            </div>
-            <div className="form-group">
-              <label>Country</label>
-              <input
-                type="text"
-                value={profileData.address.country}
-                onChange={(e) => handleAddressChange("country", e.target.value)}
-                placeholder="Country"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Education */}
-        <div className="edit-section">
-          <div className="section-header">
-            <h2>Education</h2>
-            <button
-              className="add-btn"
-              onClick={() => setShowAddEducation(!showAddEducation)}
-            >
-              <FaPlus /> Add Education
-            </button>
-          </div>
-
-          {showAddEducation && (
-            <div className="add-form">
-              <div className="form-grid">
+          {/* Location */}
+          <div className="form-section">
+            <h2>Location</h2>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>City</label>
                 <input
                   type="text"
-                  placeholder="Degree"
-                  value={newEducation.degree}
-                  onChange={(e) => setNewEducation({...newEducation, degree: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="College/University"
-                  value={newEducation.college}
-                  onChange={(e) => setNewEducation({...newEducation, college: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Field of Study"
-                  value={newEducation.fieldOfStudy}
-                  onChange={(e) => setNewEducation({...newEducation, fieldOfStudy: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Graduation Year"
-                  value={newEducation.graduationYear}
-                  onChange={(e) => setNewEducation({...newEducation, graduationYear: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Percentage/CGPA"
-                  value={newEducation.percentage}
-                  onChange={(e) => setNewEducation({...newEducation, percentage: e.target.value})}
+                  value={formData.location.city}
+                  onChange={(e) => handleLocationChange('city', e.target.value)}
                 />
               </div>
-              <button onClick={addEducation} className="save-item-btn">Add Education</button>
+              <div className="form-group">
+                <label>Country</label>
+                <input
+                  type="text"
+                  value={formData.location.country}
+                  onChange={(e) => handleLocationChange('country', e.target.value)}
+                />
+              </div>
             </div>
-          )}
+          </div>
 
-          <div className="items-list">
-            {profileData.education.map((edu, index) => (
-              <div key={index} className="item-card">
-                <div className="item-content">
-                  <h3>{edu.degree}</h3>
-                  <p>{edu.college}</p>
-                  <p>{edu.fieldOfStudy} • {edu.graduationYear}</p>
-                  {edu.percentage && <p>Grade: {edu.percentage}</p>}
+          {/* Experience */}
+          <div className="form-section">
+            <div className="section-header">
+              <h2>Work Experience</h2>
+              <button type="button" onClick={addExperience} className="add-btn">
+                <FaPlus /> Add Experience
+              </button>
+            </div>
+            {formData.experience.map((exp, index) => (
+              <div key={index} className="form-item">
+                <div className="item-header">
+                  <h3>Experience {index + 1}</h3>
+                  <button 
+                    type="button" 
+                    onClick={() => removeExperience(index)}
+                    className="remove-btn"
+                  >
+                    <FaTrash />
+                  </button>
                 </div>
-                <button
-                  className="remove-btn"
-                  onClick={() => removeEducation(index)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Work Experience */}
-        <div className="edit-section">
-          <div className="section-header">
-            <h2>Work Experience</h2>
-            <button
-              className="add-btn"
-              onClick={() => setShowAddExperience(!showAddExperience)}
-            >
-              <FaPlus /> Add Experience
-            </button>
-          </div>
-
-          {showAddExperience && (
-            <div className="add-form">
-              <div className="form-grid">
-                <input
-                  type="text"
-                  placeholder="Company"
-                  value={newExperience.company}
-                  onChange={(e) => setNewExperience({...newExperience, company: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Position"
-                  value={newExperience.position}
-                  onChange={(e) => setNewExperience({...newExperience, position: e.target.value})}
-                />
-                <input
-                  type="date"
-                  placeholder="Start Date"
-                  value={newExperience.startDate}
-                  onChange={(e) => setNewExperience({...newExperience, startDate: e.target.value})}
-                />
-                <input
-                  type="date"
-                  placeholder="End Date"
-                  value={newExperience.endDate}
-                  onChange={(e) => setNewExperience({...newExperience, endDate: e.target.value})}
-                  disabled={newExperience.isCurrentJob}
-                />
-                <div className="checkbox-group">
-                  <input
-                    type="checkbox"
-                    id="currentJob"
-                    checked={newExperience.isCurrentJob}
-                    onChange={(e) => setNewExperience({...newExperience, isCurrentJob: e.target.checked})}
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Job Title</label>
+                    <input
+                      type="text"
+                      value={exp.jobTitle}
+                      onChange={(e) => updateExperience(index, 'jobTitle', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Company</label>
+                    <input
+                      type="text"
+                      value={exp.company}
+                      onChange={(e) => updateExperience(index, 'company', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Location</label>
+                    <input
+                      type="text"
+                      value={exp.location}
+                      onChange={(e) => updateExperience(index, 'location', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Start Date</label>
+                    <input
+                      type="date"
+                      value={exp.startDate}
+                      onChange={(e) => updateExperience(index, 'startDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>End Date</label>
+                    <input
+                      type="date"
+                      value={exp.endDate}
+                      onChange={(e) => updateExperience(index, 'endDate', e.target.value)}
+                      disabled={exp.isCurrentJob}
+                    />
+                  </div>
+                  <div className="form-group checkbox-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={exp.isCurrentJob}
+                        onChange={(e) => updateExperience(index, 'isCurrentJob', e.target.checked)}
+                      />
+                      Currently working here
+                    </label>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    value={exp.description}
+                    onChange={(e) => updateExperience(index, 'description', e.target.value)}
+                    rows="3"
                   />
-                  <label htmlFor="currentJob">Currently working here</label>
                 </div>
-                <textarea
-                  placeholder="Job description"
-                  value={newExperience.description}
-                  onChange={(e) => setNewExperience({...newExperience, description: e.target.value})}
-                  rows={3}
-                  className="full-width"
-                />
-              </div>
-              <button onClick={addExperience} className="save-item-btn">Add Experience</button>
-            </div>
-          )}
-
-          <div className="items-list">
-            {profileData.experience.map((exp, index) => (
-              <div key={index} className="item-card">
-                <div className="item-content">
-                  <h3>{exp.position}</h3>
-                  <p>{exp.company}</p>
-                  <p>{exp.startDate} - {exp.isCurrentJob ? "Present" : exp.endDate}</p>
-                  <p>{exp.description}</p>
-                </div>
-                <button
-                  className="remove-btn"
-                  onClick={() => removeExperience(index)}
-                >
-                  <FaTimes />
-                </button>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Projects */}
-        <div className="edit-section">
-          <div className="section-header">
-            <h2>Projects</h2>
-            <button
-              className="add-btn"
-              onClick={() => setShowAddProject(!showAddProject)}
-            >
-              <FaPlus /> Add Project
+          {/* Education */}
+          <div className="form-section">
+            <div className="section-header">
+              <h2>Education</h2>
+              <button type="button" onClick={addEducation} className="add-btn">
+                <FaPlus /> Add Education
+              </button>
+            </div>
+            {formData.education.map((edu, index) => (
+              <div key={index} className="form-item">
+                <div className="item-header">
+                  <h3>Education {index + 1}</h3>
+                  <button 
+                    type="button" 
+                    onClick={() => removeEducation(index)}
+                    className="remove-btn"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Degree</label>
+                    <input
+                      type="text"
+                      value={edu.degree}
+                      onChange={(e) => updateEducation(index, 'degree', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Institution</label>
+                    <input
+                      type="text"
+                      value={edu.institution}
+                      onChange={(e) => updateEducation(index, 'institution', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Field of Study</label>
+                    <input
+                      type="text"
+                      value={edu.fieldOfStudy}
+                      onChange={(e) => updateEducation(index, 'fieldOfStudy', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Start Date</label>
+                    <input
+                      type="date"
+                      value={edu.startDate}
+                      onChange={(e) => updateEducation(index, 'startDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>End Date</label>
+                    <input
+                      type="date"
+                      value={edu.endDate}
+                      onChange={(e) => updateEducation(index, 'endDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Grade</label>
+                    <input
+                      type="text"
+                      value={edu.grade}
+                      onChange={(e) => updateEducation(index, 'grade', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    value={edu.description}
+                    onChange={(e) => updateEducation(index, 'description', e.target.value)}
+                    rows="3"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Skills */}
+          <div className="form-section">
+            <div className="section-header">
+              <h2>Skills</h2>
+              <button type="button" onClick={addSkill} className="add-btn">
+                <FaPlus /> Add Skill
+              </button>
+            </div>
+            <div className="skills-grid">
+              {formData.skills.map((skill, index) => (
+                <div key={index} className="skill-item">
+                  <div className="form-group">
+                    <label>Skill Name</label>
+                    <input
+                      type="text"
+                      value={skill.name}
+                      onChange={(e) => updateSkill(index, 'name', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Level</label>
+                    <select
+                      value={skill.level}
+                      onChange={(e) => updateSkill(index, 'level', e.target.value)}
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select
+                      value={skill.category}
+                      onChange={(e) => updateSkill(index, 'category', e.target.value)}
+                    >
+                      <option value="Programming">Programming</option>
+                      <option value="Framework">Framework</option>
+                      <option value="Database">Database</option>
+                      <option value="Tool">Tool</option>
+                      <option value="Soft Skill">Soft Skill</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => removeSkill(index)}
+                    className="remove-btn-small"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Projects */}
+          <div className="form-section">
+            <div className="section-header">
+              <h2>Projects</h2>
+              <button type="button" onClick={addProject} className="add-btn">
+                <FaPlus /> Add Project
+              </button>
+            </div>
+            {formData.projects.map((project, index) => (
+              <div key={index} className="form-item">
+                <div className="item-header">
+                  <h3>Project {index + 1}</h3>
+                  <button 
+                    type="button" 
+                    onClick={() => removeProject(index)}
+                    className="remove-btn"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Project Title</label>
+                    <input
+                      type="text"
+                      value={project.title}
+                      onChange={(e) => updateProject(index, 'title', e.target.value)}
+                      placeholder="e.g., E-commerce Website"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select
+                      value={project.status}
+                      onChange={(e) => updateProject(index, 'status', e.target.value)}
+                    >
+                      <option value="Completed">Completed</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="On Hold">On Hold</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Start Date</label>
+                    <input
+                      type="date"
+                      value={project.startDate}
+                      onChange={(e) => updateProject(index, 'startDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>End Date</label>
+                    <input
+                      type="date"
+                      value={project.endDate}
+                      onChange={(e) => updateProject(index, 'endDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Project URL</label>
+                    <input
+                      type="url"
+                      value={project.projectUrl}
+                      onChange={(e) => updateProject(index, 'projectUrl', e.target.value)}
+                      placeholder="https://your-project.com"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>GitHub URL</label>
+                    <input
+                      type="url"
+                      value={project.githubUrl}
+                      onChange={(e) => updateProject(index, 'githubUrl', e.target.value)}
+                      placeholder="https://github.com/username/repo"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Project Description</label>
+                  <textarea
+                    value={project.description}
+                    onChange={(e) => updateProject(index, 'description', e.target.value)}
+                    rows="3"
+                    placeholder="Describe your project, its features, and your role..."
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Technologies Used (comma separated)</label>
+                  <input
+                    type="text"
+                    value={project.technologies ? project.technologies.join(', ') : ''}
+                    onChange={(e) => updateProjectTechnologies(index, e.target.value)}
+                    placeholder="React, Node.js, MongoDB, Express"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" disabled={loading} className="save-btn">
+              <FaSave />
+              {loading ? "Saving..." : "Save Profile"}
             </button>
           </div>
-
-          {showAddProject && (
-            <div className="add-form">
-              <div className="form-grid">
-                <input
-                  type="text"
-                  placeholder="Project Title"
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({...newProject, title: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Technologies Used"
-                  value={newProject.technologies}
-                  onChange={(e) => setNewProject({...newProject, technologies: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="Live URL (optional)"
-                  value={newProject.liveUrl}
-                  onChange={(e) => setNewProject({...newProject, liveUrl: e.target.value})}
-                />
-                <input
-                  type="url"
-                  placeholder="GitHub URL (optional)"
-                  value={newProject.githubUrl}
-                  onChange={(e) => setNewProject({...newProject, githubUrl: e.target.value})}
-                />
-                <input
-                  type="date"
-                  placeholder="Start Date"
-                  value={newProject.startDate}
-                  onChange={(e) => setNewProject({...newProject, startDate: e.target.value})}
-                />
-                <input
-                  type="date"
-                  placeholder="End Date"
-                  value={newProject.endDate}
-                  onChange={(e) => setNewProject({...newProject, endDate: e.target.value})}
-                />
-                <textarea
-                  placeholder="Project Description"
-                  value={newProject.description}
-                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
-                  rows={3}
-                  className="full-width"
-                />
-              </div>
-              <button onClick={addProject} className="save-item-btn">Add Project</button>
-            </div>
-          )}
-
-          <div className="items-list">
-            {profileData.projects.map((project, index) => (
-              <div key={index} className="item-card">
-                <div className="item-content">
-                  <h3>{project.title}</h3>
-                  <p>Technologies: {project.technologies}</p>
-                  <p>{project.description}</p>
-                  {project.liveUrl && <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">Live Demo</a>}
-                  {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">GitHub</a>}
-                </div>
-                <button
-                  className="remove-btn"
-                  onClick={() => removeProject(index)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="edit-section">
-          <div className="section-header">
-            <h2>Skills</h2>
-            <button
-              className="add-btn"
-              onClick={() => setShowAddSkill(!showAddSkill)}
-            >
-              <FaPlus /> Add Skill
-            </button>
-          </div>
-
-          {showAddSkill && (
-            <div className="add-form">
-              <div className="form-grid">
-                <input
-                  type="text"
-                  placeholder="Skill name"
-                  value={newSkill.name}
-                  onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
-                />
-                <select
-                  value={newSkill.proficiency}
-                  onChange={(e) => setNewSkill({...newSkill, proficiency: e.target.value})}
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                  <option value="Expert">Expert</option>
-                </select>
-              </div>
-              <button onClick={addSkill} className="save-item-btn">Add Skill</button>
-            </div>
-          )}
-
-          <div className="skills-list">
-            {profileData.skills.map((skill, index) => (
-              <span key={index} className="skill-tag">
-                {skill.name} - {skill.proficiency}
-                <button
-                  className="remove-skill-btn"
-                  onClick={() => removeSkill(index)}
-                >
-                  <FaTimes />
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
+        </form>
       </div>
     </div>
   );

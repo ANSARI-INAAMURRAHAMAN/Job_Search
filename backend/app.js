@@ -1,8 +1,8 @@
 import express from "express";
 import dbConnection from "./database/dbConnection.js";
+import userRouter from "./routes/userRouter.js";
 import jobRouter from "./routes/jobRoutes.js";
-import userRouter from "./routes/userRoutes.js";
-import applicationRouter from "./routes/applicationRoutes.js";
+import applicationRouter from "./routes/applicationRouter.js";
 import authRouter from "./routes/authRoutes.js";
 import userProfileRoute from "./routes/userProfileRoute.js";
 import fs from "fs";
@@ -34,7 +34,7 @@ if (!fs.existsSync(tempDir)) {
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: [process.env.FRONTEND_URL, "http://localhost:5173"],
     method: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })

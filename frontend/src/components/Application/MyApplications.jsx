@@ -2,8 +2,8 @@ import React, { useContext, useEffect, useState, memo, useCallback } from "react
 import { Context } from "../../main";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaFileAlt, FaTrash, FaEye } from "react-icons/fa";
+import { useNavigate, Link } from "react-router-dom";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaFileAlt, FaTrash, FaEye, FaCalendarAlt, FaBriefcase } from "react-icons/fa";
 import ResumeModal from "./ResumeModal";
 import "./MyApplications.css";
 
@@ -71,7 +71,7 @@ const ApplicationCard = memo(({ application, onDelete, onViewResume, showDeleteB
   </div>
 ));
 
-const MyApplications = memo(() => {
+const MyApplications = () => {
   const { user, isAuthorized } = useContext(Context);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,40 +138,97 @@ const MyApplications = memo(() => {
   const isJobSeeker = user?.role === "Job Seeker";
   const title = isJobSeeker ? "My Applications" : "Applications From Job Seekers";
 
-  return (
-    <div className="applications-container">
-      <div className="applications-wrapper">
-        <div className="applications-header">
-          <h1 className="page-title">{title}</h1>
-          <div className="applications-stats">
-            <span className="stat-number">{applications.length}</span>
-            <span className="stat-label">Total Applications</span>
-          </div>
-        </div>
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
-        {applications.length > 0 ? (
-          <div className="applications-grid">
-            {applications.map((application, index) => (
-              <div key={application._id} style={{ animationDelay: `${index * 0.1}s` }}>
-                <ApplicationCard
-                  application={application}
-                  onDelete={deleteApplication}
-                  onViewResume={openModal}
-                  showDeleteBtn={isJobSeeker}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <FaFileAlt className="empty-icon" />
-            <h3>No Applications Found</h3>
+  const getStatusClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted': return 'status-accepted';
+      case 'rejected': return 'status-rejected';
+      default: return 'status-pending';
+    }
+  };
+
+  return (
+    <section className="my_applications page">
+      <div className="container">
+        <h1>
+          {user && user.role === "Job Seeker" ? "My Applications" : "Applications From Job Seekers"}
+        </h1>
+        {applications.length <= 0 ? (
+          <div className="no-applications">
+            <h4>No Applications Found</h4>
             <p>
-              {isJobSeeker 
-                ? "You haven't applied to any jobs yet."
-                : "No applications have been submitted for your job postings yet."
+              {user && user.role === "Job Seeker" 
+                ? "You haven't applied for any jobs yet."
+                : "No one has applied for your jobs yet."
               }
             </p>
+          </div>
+        ) : (
+          <div className="applications-grid">
+            {applications.map((element) => (
+              <div className="application-card" key={element._id}>
+                <div className="card-header">
+                  <div className="applicant-info">
+                    <div className="applicant-avatar">
+                      <FaUser />
+                    </div>
+                    <div className="applicant-details">
+                      <h3>{element.name}</h3>
+                      <p className="applicant-email">{element.email}</p>
+                      <p className="applicant-phone">{element.phone}</p>
+                    </div>
+                  </div>
+                  <span className={`status-badge ${getStatusClass(element.status)}`}>
+                    {element.status}
+                  </span>
+                </div>
+
+                <div className="card-content">
+                  <div className="job-info">
+                    <div className="info-item">
+                      <FaBriefcase className="info-icon" />
+                      <span>Applied for: <strong>{element.jobId?.title || "Job Title"}</strong></span>
+                    </div>
+                    <div className="info-item">
+                      <FaCalendarAlt className="info-icon" />
+                      <span>Applied on: {formatDate(element.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  <div className="cover-letter-preview">
+                    <h4>Cover Letter:</h4>
+                    <p>{element.coverLetter.substring(0, 100)}...</p>
+                  </div>
+
+                  <div className="card-actions">
+                    {user && user.role === "Employer" ? (
+                      <Link 
+                        to={`/applicant/${element._id}`} 
+                        className="action-btn view-profile"
+                      >
+                        <FaEye />
+                        View Profile
+                      </Link>
+                    ) : (
+                      <button 
+                        onClick={() => deleteApplication(element._id)}
+                        className="action-btn delete"
+                      >
+                        <FaTrash />
+                        Delete Application
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -179,8 +236,8 @@ const MyApplications = memo(() => {
       {modalOpen && (
         <ResumeModal imageUrl={resumeImageUrl} onClose={closeModal} />
       )}
-    </div>
+    </section>
   );
-});
+};
 
 export default MyApplications;
