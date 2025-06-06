@@ -49,7 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-super-secret-session-key',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Changed to true for OAuth
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours

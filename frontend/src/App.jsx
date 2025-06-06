@@ -1,8 +1,11 @@
 import React, { useContext, useEffect } from "react";
+import "./App.css";
 import { Context } from "./main";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
+import RoleSelection from "./components/Auth/RoleSelection";
+import OAuthHandler from "./components/Auth/OAuthHandler";
 import { Toaster } from "react-hot-toast";
 import axios from "axios";
 import Navbar from "./components/Layout/Navbar";
@@ -15,63 +18,80 @@ import MyApplications from "./components/Application/MyApplications";
 import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
-import RoleSelection from "./components/Auth/RoleSelection";
-import UserProfile from "./components/User/UserProfile";
-import EditProfile from "./components/User/EditProfile";
-import ApplicantProfile from "./components/Application/ApplicantProfile";
-import ChatList from "./components/Chat/ChatList";
-import ChatWindow from "./components/Chat/ChatWindow";
 import API_BASE_URL from "./config/api";
 
-const App = () => {
+const AppContent = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
+  const location = useLocation();
+
+  // Check if this is an OAuth callback
+  const isOAuthCallback =
+    location.search.includes("auth=success") ||
+    location.search.includes("error=oauth_failed");
 
   useEffect(() => {
+    // If it's an OAuth callback, let OAuthHandler handle it
+    if (isOAuthCallback) {
+      console.log("OAuth callback detected, letting OAuthHandler handle it");
+      return;
+    }
+
+    // Regular authentication check for non-OAuth requests
     const fetchUser = async () => {
       try {
+        console.log("Fetching user data for regular auth check...");
         const response = await axios.get(
           `${API_BASE_URL}/user/getuser`,
           {
             withCredentials: true,
           }
         );
+        console.log("User data fetched successfully:", response.data.user?.name);
         setUser(response.data.user);
         setIsAuthorized(true);
       } catch (error) {
-        console.log("Auth check failed:", error.response?.data?.message);
+        console.log("No authenticated user found");
         setIsAuthorized(false);
-        setUser(null);
       }
     };
-    fetchUser();
-  }, [setIsAuthorized, setUser]);
+
+    if (!isAuthorized) {
+      fetchUser();
+    }
+  }, [isAuthorized, setIsAuthorized, setUser, isOAuthCallback]);
+
+  // If it's an OAuth callback, render the handler
+  if (isOAuthCallback) {
+    return <OAuthHandler />;
+  }
 
   return (
     <>
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/job/getall" element={<Jobs />} />
-          <Route path="/job/:id" element={<JobDetails />} />
-          <Route path="/application/:id" element={<Application />} />
-          <Route path="/applications/me" element={<MyApplications />} />
-          <Route path="/applicant/:applicationId" element={<ApplicantProfile />} />
-          <Route path="/job/post" element={<PostJob />} />
-          <Route path="/job/me" element={<MyJobs />} />
-          <Route path="/select-role" element={<RoleSelection />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/messages" element={<ChatList />} />
-          <Route path="/chat/:applicationId" element={<ChatWindow />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Footer />
-        <Toaster />
-      </BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/role-selection" element={<RoleSelection />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/job/getall" element={<Jobs />} />
+        <Route path="/job/:id" element={<JobDetails />} />
+        <Route path="/application/:jobId" element={<Application />} />
+        <Route path="/applications/me" element={<MyApplications />} />
+        <Route path="/job/post" element={<PostJob />} />
+        <Route path="/job/me" element={<MyJobs />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Footer />
     </>
+  );
+};
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+      <Toaster />
+    </BrowserRouter>
   );
 };
 

@@ -11,7 +11,7 @@ router.get('/google', googleAuth);
 router.get('/google/callback',
   passport.authenticate('google', { 
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth_failed`,
-    session: false
+    session: true // Changed to true to maintain session
   }),
   googleCallback
 );

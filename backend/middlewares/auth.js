@@ -6,26 +6,37 @@ import jwt from "jsonwebtoken";
 export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.cookies;
   
+  console.log('Auth middleware - Request path:', req.path);
+  console.log('Auth middleware - All cookies:', Object.keys(req.cookies));
+  console.log('Auth middleware - Token present:', !!token);
+  console.log('Auth middleware - Token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'no token');
+  
   if (!token) {
+    console.log('No token found in cookies');
     return next(new ErrorHandler("User Not Authorized", 401));
   }
   
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log('Token decoded successfully for user ID:', decoded.id);
     
     if (!decoded || !decoded.id) {
+      console.log('Invalid token structure');
       return next(new ErrorHandler("Invalid token", 401));
     }
     
     const user = await User.findById(decoded.id);
     
     if (!user) {
+      console.log('User not found for ID:', decoded.id);
       return next(new ErrorHandler("User not found", 401));
     }
     
+    console.log('User authenticated successfully:', user.name, user.role);
     req.user = user;
     next();
   } catch (error) {
+    console.log('Token verification failed:', error.message);
     return next(new ErrorHandler("Authentication failed", 401));
   }
 });

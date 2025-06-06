@@ -46,6 +46,8 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
     
     console.log('Google OAuth callback - userInfo:', userInfo);
     console.log('Selected role from session:', selectedRole);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
     
     if (userInfo.needsRole) {
       // New user - store Google profile and redirect to role selection
@@ -66,7 +68,7 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         
         console.log('New user created with pre-selected role:', user._id);
         
-        // Generate token and set cookie
+        // Generate token and set cookie with proper settings
         const token = user.getJWTToken();
         const cookieOptions = {
           expires: new Date(
@@ -78,6 +80,7 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
           path: "/",
         };
 
+        console.log('Setting cookie with options:', cookieOptions);
         res.cookie("token", token, cookieOptions);
         
         // Clear session data
@@ -85,16 +88,21 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         delete req.session.googleProfile;
         
         // Redirect to home page
-        res.redirect(`${process.env.FRONTEND_URL}/?auth=success&role=${user.role}&name=${encodeURIComponent(user.name)}`);
+        const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(user.role)}&name=${encodeURIComponent(user.name)}`;
+        console.log('Redirecting to:', redirectUrl);
+        return res.redirect(redirectUrl);
       } else {
         // No role selected, redirect to role selection page
         console.log('Redirecting to role selection');
-        res.redirect(`${process.env.FRONTEND_URL}/role-selection?new_user=true&google_auth=true`);
+        const redirectUrl = `${process.env.FRONTEND_URL}/role-selection?new_user=true&google_auth=true`;
+        console.log('Role selection redirect URL:', redirectUrl);
+        return res.redirect(redirectUrl);
       }
-      return;
     }
 
     // Existing user - generate token and redirect
+    console.log('Processing existing user:', userInfo._id, userInfo.role);
+    
     const token = userInfo.getJWTToken();
     const cookieOptions = {
       expires: new Date(
@@ -106,13 +114,18 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
       path: "/",
     };
 
+    console.log('Setting cookie for existing user with options:', cookieOptions);
+    console.log('Token length:', token ? token.length : 'no token');
+    
     res.cookie("token", token, cookieOptions);
     
     // Clear session data
     delete req.session.selectedRole;
     
-    console.log('Existing user logged in:', userInfo._id);
-    res.redirect(`${process.env.FRONTEND_URL}/?auth=success&role=${userInfo.role}&name=${encodeURIComponent(userInfo.name)}`);
+    const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(userInfo.role)}&name=${encodeURIComponent(userInfo.name)}`;
+    console.log('Existing user redirect URL:', redirectUrl);
+    
+    return res.redirect(redirectUrl);
 
   } catch (error) {
     console.error('Google OAuth callback error:', error);
