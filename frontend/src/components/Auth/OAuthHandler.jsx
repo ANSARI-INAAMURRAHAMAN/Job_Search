@@ -30,8 +30,8 @@ const OAuthHandler = () => {
         try {
           console.log('OAuth success detected, verifying authentication...');
           
-          // Small delay to ensure cookie is set
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Add longer delay to ensure cookie is properly set
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           // The backend has already set the cookie, now verify authentication
           const response = await axios.get(
@@ -60,7 +60,12 @@ const OAuthHandler = () => {
           }
         } catch (error) {
           console.error('Failed to verify authentication:', error.response?.data || error.message);
-          toast.error('Authentication verification failed. Please try logging in again.');
+          
+          // If still unauthorized, try to clear any stale cookies and redirect to login
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.onrender.com;';
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          
+          toast.error('Authentication failed. Please try logging in again.');
           navigate('/login');
         }
       } else if (location.pathname === '/' && !authStatus) {

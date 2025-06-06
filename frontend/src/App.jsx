@@ -18,7 +18,6 @@ import MyApplications from "./components/Application/MyApplications";
 import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
-import API_BASE_URL from "./config/api";
 
 const AppContent = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
@@ -41,7 +40,7 @@ const AppContent = () => {
       try {
         console.log("Fetching user data for regular auth check...");
         const response = await axios.get(
-          `${API_BASE_URL}/user/getuser`,
+          `${import.meta.env.VITE_BACKEND_URL}/user/getuser`,
           {
             withCredentials: true,
           }

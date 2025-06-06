@@ -102,8 +102,11 @@ const Login = memo(() => {
 
   // Google Login Handler
   const handleGoogleLogin = useCallback(() => {
+    // Store current origin for proper redirects
+    sessionStorage.setItem('oauth_origin', window.location.origin);
+    
     // Redirect to backend Google OAuth without role parameter
-    // Role will be selected on the role selection page
+    // Role will be selected on the role selection page for new users
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://job-search-ypji.onrender.com/api/v1';
     window.location.href = `${backendUrl}/auth/google`;
   }, []);

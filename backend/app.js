@@ -39,6 +39,8 @@ app.use(
     origin: [process.env.FRONTEND_URL, "http://localhost:5173"],
     method: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Set-Cookie']
   })
 );
 
@@ -51,10 +53,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true, // Changed to true for OAuth
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Always secure in production
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: false,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'none', // Required for cross-origin
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
   }
 }));
 

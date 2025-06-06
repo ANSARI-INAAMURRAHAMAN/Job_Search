@@ -68,16 +68,17 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         
         console.log('New user created with pre-selected role:', user._id);
         
-        // Generate token and set cookie with proper settings
+        // Generate token and set cookie with improved settings for cross-origin
         const token = user.getJWTToken();
         const cookieOptions = {
           expires: new Date(
             Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
           ),
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          secure: true, // Always secure in production
+          sameSite: "none", // Required for cross-origin
           path: "/",
+          domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
         };
 
         console.log('Setting cookie with options:', cookieOptions);
@@ -88,7 +89,7 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         delete req.session.googleProfile;
         
         // Redirect to home page
-        const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(user.role)}&name=${encodeURIComponent(user.name)}`;
+        const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(user.role)}&name=${encodeURIComponent(user.name)}&token=${encodeURIComponent(token)}`;
         console.log('Redirecting to:', redirectUrl);
         return res.redirect(redirectUrl);
       } else {
@@ -109,9 +110,10 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true, // Always secure in production
+      sameSite: "none", // Required for cross-origin
       path: "/",
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     };
 
     console.log('Setting cookie for existing user with options:', cookieOptions);
@@ -122,7 +124,7 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
     // Clear session data
     delete req.session.selectedRole;
     
-    const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(userInfo.role)}&name=${encodeURIComponent(userInfo.name)}`;
+    const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(userInfo.role)}&name=${encodeURIComponent(userInfo.name)}&token=${encodeURIComponent(token)}`;
     console.log('Existing user redirect URL:', redirectUrl);
     
     return res.redirect(redirectUrl);
@@ -165,16 +167,17 @@ export const completeGoogleSignup = catchAsyncErrors(async (req, res, next) => {
     // Clear session
     delete req.session.googleProfile;
 
-    // Generate token and set cookie
+    // Generate token and set cookie with improved settings
     const token = user.getJWTToken();
     const options = {
       expires: new Date(
         Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true, // Always secure in production
+      sameSite: "none", // Required for cross-origin
       path: "/",
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     };
 
     res.cookie("token", token, options).json({
