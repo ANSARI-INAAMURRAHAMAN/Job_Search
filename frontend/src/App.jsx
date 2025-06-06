@@ -5,7 +5,6 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import RoleSelection from "./components/Auth/RoleSelection";
-import OAuthHandler from "./components/Auth/OAuthHandler";
 import { Toaster } from "react-hot-toast";
 import axios from "axios";
 import Navbar from "./components/Layout/Navbar";
@@ -19,6 +18,7 @@ import PostJob from "./components/Job/PostJob";
 import NotFound from "./components/NotFound/NotFound";
 import MyJobs from "./components/Job/MyJobs";
 import UserProfile from "./components/UserProfile/UserProfile";
+import OAuthHandler from "./components/Auth/OAuthHandler";
 
 const AppContent = () => {
   const { isAuthorized, setIsAuthorized, setUser } = useContext(Context);
