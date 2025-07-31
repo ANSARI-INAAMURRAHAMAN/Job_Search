@@ -7,7 +7,10 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/api/v1/auth/google/callback',
+      callbackURL:
+        process.env.NODE_ENV === 'production'
+          ? `${process.env.FRONTEND_URL}/api/v1/auth/google/callback`
+          : 'http://localhost:8000/api/v1/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -28,11 +31,17 @@ passport.use(
           return done(null, existingUser);
         }
 
-        // Create new user - but we need role from session
-        return done(null, {
+        // Create new user data object for role selection
+        const newUserData = {
           googleProfile: profile,
           needsRole: true,
-        });
+          email: profile.emails[0].value,
+          name: profile.displayName,
+          avatar: profile.photos[0]?.value,
+          googleId: profile.id,
+        };
+
+        return done(null, newUserData);
       } catch (error) {
         return done(error, null);
       }
@@ -41,11 +50,29 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  done(null, user);
+  // Handle both existing users and new user data
+  if (user._id) {
+    done(null, { id: user._id, type: 'existing' });
+  } else if (user.needsRole) {
+    done(null, { userData: user, type: 'newUser' });
+  } else {
+    done(null, user);
+  }
 });
 
-passport.deserializeUser((user, done) => {
-  done(null, user);
+passport.deserializeUser(async (serializedUser, done) => {
+  try {
+    if (serializedUser.type === 'existing') {
+      const user = await User.findById(serializedUser.id);
+      done(null, user);
+    } else if (serializedUser.type === 'newUser') {
+      done(null, serializedUser.userData);
+    } else {
+      done(null, serializedUser);
+    }
+  } catch (error) {
+    done(error, null);
+  }
 });
 
 export default passport;

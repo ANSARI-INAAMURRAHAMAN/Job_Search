@@ -29,23 +29,67 @@ const RoleSelection = memo(() => {
       const response = await axios.post(
         `${API_BASE_URL}/auth/complete-google-signup`,
         { role: selectedRole },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
       
-      toast.success(response.data.message);
-      setUser(response.data.user);
-      setIsAuthorized(true);
-      navigateTo("/");
+      if (response.data.success) {
+        toast.success(response.data.message || "Registration completed successfully!");
+        setUser(response.data.user);
+        setIsAuthorized(true);
+        navigateTo("/");
+      } else {
+        throw new Error(response.data.message || "Registration failed");
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to complete registration");
+      console.error("Role completion error:", error);
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          "Failed to complete registration";
+      toast.error(errorMessage);
+      
+      // If session expired or invalid, redirect to login
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Session expired. Please sign in again.");
+        navigateTo("/login");
+      }
     } finally {
       setLoading(false);
     }
   }, [selectedRole, setIsAuthorized, setUser, navigateTo]);
 
+  // Check authentication status on mount
+  React.useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/user/getuser`,
+          { withCredentials: true }
+        );
+        
+        // If user already has a role, redirect to home
+        if (response.data.user && response.data.user.role) {
+          setUser(response.data.user);
+          setIsAuthorized(true);
+          navigateTo("/");
+        }
+      } catch (error) {
+        // If not authenticated or needs role selection, stay on page
+        if (!isNewUser) {
+          navigateTo("/login");
+        }
+      }
+    };
+
+    checkAuthStatus();
+  }, [isNewUser, navigateTo, setUser, setIsAuthorized]);
+
   if (!isNewUser) {
-    navigateTo("/login");
-    return null;
+    return null; // Let useEffect handle the redirect
   }
 
   return (
