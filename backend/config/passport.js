@@ -7,7 +7,10 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/api/v1/auth/google/callback',
+      callbackURL:
+        process.env.NODE_ENV === 'production'
+          ? 'https://job-search-2-qkat.onrender.com/api/v1/auth/google/callback'
+          : 'http://localhost:8000/api/v1/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -32,6 +35,10 @@ passport.use(
         return done(null, {
           googleProfile: profile,
           needsRole: true,
+          email: profile.emails[0].value,
+          name: profile.displayName,
+          avatar: profile.photos[0]?.value,
+          googleId: profile.id,
         });
       } catch (error) {
         return done(error, null);
@@ -41,11 +48,30 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  done(null, user);
+  if (user._id) {
+    // Existing user
+    done(null, { id: user._id, type: 'existing' });
+  } else if (user.needsRole) {
+    // New user needing role selection
+    done(null, { userData: user, type: 'newUser' });
+  } else {
+    done(null, user);
+  }
 });
 
-passport.deserializeUser((user, done) => {
-  done(null, user);
+passport.deserializeUser(async (serializedUser, done) => {
+  try {
+    if (serializedUser.type === 'existing') {
+      const user = await User.findById(serializedUser.id);
+      done(null, user);
+    } else if (serializedUser.type === 'newUser') {
+      done(null, serializedUser.userData);
+    } else {
+      done(null, serializedUser);
+    }
+  } catch (error) {
+    done(error, null);
+  }
 });
 
 export default passport;
