@@ -7,10 +7,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL:
-        process.env.NODE_ENV === 'production'
-          ? 'https://job-search-2-qkat.onrender.com/api/v1/auth/google/callback'
-          : 'http://localhost:8000/api/v1/auth/google/callback',
+      callbackURL: '/api/v1/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -31,14 +28,10 @@ passport.use(
           return done(null, existingUser);
         }
 
-        // Create new user - but we need role from session
-        return done(null, {
+        // Create new user data object for role selection
+        const newUserData = {
           googleProfile: profile,
           needsRole: true,
-          email: profile.emails[0].value,
-          name: profile.displayName,
-          avatar: profile.photos[0]?.value,
-          googleId: profile.id,
         });
       } catch (error) {
         return done(error, null);
@@ -48,15 +41,7 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  if (user._id) {
-    // Existing user
-    done(null, { id: user._id, type: 'existing' });
-  } else if (user.needsRole) {
-    // New user needing role selection
-    done(null, { userData: user, type: 'newUser' });
-  } else {
-    done(null, user);
-  }
+  done(null, user);
 });
 
 passport.deserializeUser(async (serializedUser, done) => {
