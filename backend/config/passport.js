@@ -32,7 +32,7 @@ passport.use(
         const newUserData = {
           googleProfile: profile,
           needsRole: true,
-        });
+        };
       } catch (error) {
         return done(error, null);
       }
