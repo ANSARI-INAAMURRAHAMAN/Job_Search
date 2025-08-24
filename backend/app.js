@@ -17,7 +17,7 @@ import passport from "passport";
 import session from "express-session";
 
 const app = express();
-config({ path: "./config/config.env" });
+config({ path: "./.env" });
 
 // Initialize passport configuration
 import("./config/passport.js");

@@ -162,7 +162,7 @@ export const extractProfileDataFromResume = async (resumeText) => {
     const response = await result.response;
     const text = response.text();
     
-    //    console.log('Gemini AI Response:', text); // Removed to avoid logging sensitive data
+    console.log('Gemini AI Response:', text);
     
     // Clean the response to extract JSON
     const jsonMatch = text.match(/\{[\s\S]*\}/);

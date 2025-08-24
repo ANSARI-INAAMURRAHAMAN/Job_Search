@@ -222,6 +222,242 @@
   100% { transform: rotate(360deg); }
 }
 
+/* AI Resume Upload Section */
+.ai-resume-section {
+  margin-top: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+}
+
+.ai-resume-section .section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.ai-resume-section .section-header .ai-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  color: #ffd700;
+}
+
+.ai-resume-section .section-header h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.ai-resume-section .section-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+}
+
+.show-upload-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 1rem 2rem;
+  border-radius: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 auto;
+  font-size: 1.1rem;
+}
+
+.show-upload-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.resume-upload-container {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 15px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.merge-options h4 {
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.radio-group {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.radio-group input[type="radio"] {
+  accent-color: #ffd700;
+  transform: scale(1.2);
+}
+
+.file-upload-section {
+  margin: 1rem 0;
+}
+
+.file-input-wrapper {
+  position: relative;
+}
+
+.file-input-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.file-input-label:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.file-input-label svg {
+  font-size: 2rem;
+  color: #ffd700;
+}
+
+.file-input-label span {
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.file-preview {
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: white;
+}
+
+.file-info svg {
+  color: #ffd700;
+  font-size: 1.5rem;
+}
+
+.file-size {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.upload-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.process-btn {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #333;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1rem;
+}
+
+.process-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+}
+
+.process-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.processing-info {
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.processing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.processing-steps .step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  font-weight: 500;
+}
+
+.processing-steps .step svg {
+  color: #ffd700;
+  font-size: 1.3rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 @media (max-width: 768px) {
   .edit-profile-page {
     padding: 1rem 0;
@@ -251,5 +487,43 @@
     position: static;
     align-self: flex-start;
     margin-top: 1rem;
+  }
+  
+  /* AI Resume Section Mobile */
+  .ai-resume-section {
+    margin-top: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .ai-resume-section .section-header .ai-icon {
+    font-size: 2.5rem;
+  }
+  
+  .ai-resume-section .section-header h3 {
+    font-size: 1.5rem;
+  }
+  
+  .show-upload-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .radio-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .file-input-label {
+    padding: 1.5rem 1rem;
+  }
+  
+  .upload-actions {
+    flex-direction: column;
+  }
+  
+  .process-btn,
+  .cancel-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

@@ -3,7 +3,7 @@ import React, { useContext, useState, memo, useCallback } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../main";
-import { FaUser, FaEnvelope, FaPhone, FaFileUpload, FaPaperPlane, FaArrowLeft } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaFileUpload, FaPaperPlane, FaArrowLeft, FaRobot, FaSpinner } from "react-icons/fa";
 import API_BASE_URL from "../../config/api";
 import "./Application.css";
 
@@ -17,6 +17,7 @@ const Application = memo(() => {
   });
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [aiProcessing, setAiProcessing] = useState(false);
 
   const { isAuthorized, user } = useContext(Context);
   const navigateTo = useNavigate();
@@ -47,6 +48,50 @@ const Application = memo(() => {
   const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  // Process resume with AI
+  const processResumeWithAI = useCallback(async () => {
+    if (!resume) {
+      toast.error("Please select a resume first");
+      return;
+    }
+
+    setAiProcessing(true);
+    
+    const data = new FormData();
+    data.append("resume", resume);
+
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/resume/process`,
+        data,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      
+      if (response.data.success) {
+        const { data: extractedData } = response.data;
+        
+        // Auto-fill form with extracted data
+        setFormData({
+          name: extractedData.name || "",
+          email: extractedData.email || "",
+          phone: extractedData.phone || "",
+          address: extractedData.address || "",
+          coverLetter: extractedData.coverLetter || "",
+        });
+        
+        toast.success("Resume processed successfully! Form auto-filled.");
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to process resume";
+      toast.error(errorMessage);
+    } finally {
+      setAiProcessing(false);
+    }
+  }, [resume]);
 
   const handleApplication = useCallback(async (e) => {
     e.preventDefault();
@@ -178,7 +223,7 @@ const Application = memo(() => {
           <div className="form-section">
             <h3>
               <FaFileUpload />
-              Resume Upload
+              Resume Upload & AI Processing
             </h3>
             
             <div className="file-upload-section">
@@ -215,13 +260,33 @@ const Application = memo(() => {
                       className="preview-image"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setResume(null)}
-                    className="remove-file-btn"
-                  >
-                    Remove
-                  </button>
+                  <div className="ai-actions">
+                    <button
+                      type="button"
+                      onClick={processResumeWithAI}
+                      disabled={aiProcessing}
+                      className="ai-process-btn"
+                    >
+                      {aiProcessing ? (
+                        <>
+                          <FaSpinner className="spinning" />
+                          Processing with AI...
+                        </>
+                      ) : (
+                        <>
+                          <FaRobot />
+                          Auto-Fill with AI
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResume(null)}
+                      className="remove-file-btn"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

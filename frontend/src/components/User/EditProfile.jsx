@@ -98,6 +98,10 @@ const EditProfile = () => {
         projects
       };
 
+      // NOTE: Ensure your server validates uploaded file types by checking file signatures (magic numbers)
+      // and not just MIME types. For example, in your Express backend, use a library like 'file-type'
+      // to inspect the actual file buffer before accepting uploads.
+
       const { data } = await axios.put(
         `${API_BASE_URL}/user/update`,
         updateData,
