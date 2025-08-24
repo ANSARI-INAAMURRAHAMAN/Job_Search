@@ -11,16 +11,7 @@ import {
   FaUser,
   FaEnvelope,
   FaPhone,
-  FaMapMarkerAlt,
-  FaFileUpload,
-  FaRobot,
-  FaSpinner,
-  FaMagic,
-  FaUpload,
-  FaCloudUploadAlt,
-  FaFileImage,
-  FaEye,
-  FaUserEdit
+  FaMapMarkerAlt
 } from "react-icons/fa";
 import API_BASE_URL from "../../config/api";
 import "./EditProfile.css";
@@ -28,11 +19,6 @@ import "./EditProfile.css";
 const EditProfile = () => {
   const { isAuthorized, user, setUser } = useContext(Context);
   const [loading, setLoading] = useState(false);
-  const [aiProcessing, setAiProcessing] = useState(false);
-  const [resume, setResume] = useState(null);
-  const [showResumeUpload, setShowResumeUpload] = useState(false);
-  const [mergeOption, setMergeOption] = useState('replace');
-  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -75,103 +61,6 @@ const EditProfile = () => {
     }
   }, [isAuthorized, user, navigateTo]);
 
-  // Handle file input change
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    
-    if (selectedFile) {
-      // Check file type for images
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(selectedFile.type)) {
-        toast.error("Please upload an image file (JPG, PNG, GIF, WEBP)");
-        return;
-      }
-      
-      // Check file size (5MB limit)
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB");
-        return;
-      }
-      
-      setResume(selectedFile);
-    }
-  };
-
-  // Process resume with AI for profile data
-  const processResumeForProfile = async () => {
-    if (!resume) {
-      toast.error("Please select a resume first");
-      return;
-    }
-
-    setAiProcessing(true);
-    
-    const data = new FormData();
-    data.append("resume", resume);
-
-    try {
-      // First, extract data from resume
-      const response = await axios.post(
-        `${API_BASE_URL}/resume/process-profile`,
-        data,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-      
-      if (response.data.success) {
-        const { data: extractedData } = response.data;
-        
-        // Update the profile with extracted data
-        const updateResponse = await axios.put(
-          `${API_BASE_URL}/resume/update-profile`,
-          {
-            profileData: extractedData,
-            mergeOption: mergeOption
-          },
-          {
-            withCredentials: true,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        
-        if (updateResponse.data.success) {
-          const updatedUser = updateResponse.data.user;
-          
-          // Update local state with new data
-          setFormData({
-            name: updatedUser.name || "",
-            email: updatedUser.email || "",
-            phone: updatedUser.phone || "",
-            bio: updatedUser.bio || "",
-            location: {
-              city: updatedUser.location?.city || "",
-              country: updatedUser.location?.country || ""
-            }
-          });
-          setSkills(updatedUser.skills || []);
-          setEducation(updatedUser.education || []);
-          setExperience(updatedUser.experience || []);
-          setProjects(updatedUser.projects || []);
-          
-          // Update global user state
-          setUser(updatedUser);
-          
-          toast.success(`Profile ${mergeOption === 'replace' ? 'updated' : 'merged'} successfully with resume data!`);
-          setShowResumeUpload(false);
-          setResume(null);
-        }
-      }
-    } catch (error) {
-      console.error('Resume processing error:', error);
-      const errorMessage = error.response?.data?.message || "Failed to process resume";
-      toast.error(errorMessage);
-    } finally {
-      setAiProcessing(false);
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
@@ -208,6 +97,10 @@ const EditProfile = () => {
         experience,
         projects
       };
+
+      // NOTE: Ensure your server validates uploaded file types by checking file signatures (magic numbers)
+      // and not just MIME types. For example, in your Express backend, use a library like 'file-type'
+      // to inspect the actual file buffer before accepting uploads.
 
       const { data } = await axios.put(
         `${API_BASE_URL}/user/update`,
@@ -740,135 +633,6 @@ const EditProfile = () => {
             </button>
           </div>
         </form>
-        
-        {/* AI Resume Upload Section */}
-        <div className="ai-resume-section">
-          <div className="section-header">
-            <FaRobot className="ai-icon" />
-            <h3>AI Resume Auto-Fill</h3>
-            <p>Upload your resume and let AI automatically fill your profile</p>
-          </div>
-          
-          {!showResumeUpload ? (
-            <button 
-              type="button" 
-              className="show-upload-btn"
-              onClick={() => setShowResumeUpload(true)}
-            >
-              <FaUpload />
-              Upload Resume for Auto-Fill
-            </button>
-          ) : (
-            <div className="resume-upload-container">
-              <div className="upload-options">
-                <div className="merge-options">
-                  <h4>How to handle existing data?</h4>
-                  <div className="radio-group">
-                    <label>
-                      <input
-                        type="radio"
-                        value="merge"
-                        checked={mergeOption === 'merge'}
-                        onChange={(e) => setMergeOption(e.target.value)}
-                      />
-                      <span>Merge with existing data</span>
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        value="replace"
-                        checked={mergeOption === 'replace'}
-                        onChange={(e) => setMergeOption(e.target.value)}
-                      />
-                      <span>Replace existing data</span>
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="file-upload-section">
-                  <div className="file-input-wrapper">
-                    <input
-                      type="file"
-                      id="resume-upload"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
-                    <label htmlFor="resume-upload" className="file-input-label">
-                      <FaCloudUploadAlt />
-                      <span>
-                        {resume ? resume.name : 'Choose resume image (JPG, PNG, etc.)'}
-                      </span>
-                    </label>
-                  </div>
-                  
-                  {resume && (
-                    <div className="file-preview">
-                      <div className="file-info">
-                        <FaFileImage />
-                        <span>{resume.name}</span>
-                        <span className="file-size">
-                          ({(resume.size / 1024 / 1024).toFixed(2)} MB)
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="upload-actions">
-                  <button
-                    type="button"
-                    className="process-btn"
-                    onClick={processResumeForProfile}
-                    disabled={!resume || aiProcessing}
-                  >
-                    {aiProcessing ? (
-                      <>
-                        <div className="spinner"></div>
-                        Processing with AI...
-                      </>
-                    ) : (
-                      <>
-                        <FaRobot />
-                        Process Resume
-                      </>
-                    )}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    className="cancel-btn"
-                    onClick={() => {
-                      setShowResumeUpload(false);
-                      setResume(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-              
-              {aiProcessing && (
-                <div className="processing-info">
-                  <div className="processing-steps">
-                    <div className="step">
-                      <FaEye />
-                      <span>Reading resume content...</span>
-                    </div>
-                    <div className="step">
-                      <FaRobot />
-                      <span>Analyzing with AI...</span>
-                    </div>
-                    <div className="step">
-                      <FaUserEdit />
-                      <span>Updating profile...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

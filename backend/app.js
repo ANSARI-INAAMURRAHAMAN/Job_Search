@@ -6,7 +6,6 @@ import applicationRouter from "./routes/applicationRouter.js";
 import chatRouter from "./routes/chatRouter.js";
 import authRouter from "./routes/authRoutes.js";
 import userProfileRoute from "./routes/userProfileRoute.js";
-import resumeRouter from "./routes/resumeRoutes.js";
 import fs from "fs";
 import path from "path";
 import { config } from "dotenv";
@@ -75,7 +74,6 @@ app.use("/api/v1/application", applicationRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use('/api/v1/auth', authRouter);
 app.use("/api/v1/user-profile", userProfileRoute);
-app.use("/api/v1/resume", resumeRouter);
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

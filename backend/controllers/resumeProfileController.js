@@ -67,7 +67,7 @@ export const updateProfileWithResumeData = catchAsyncErrors(async (req, res, nex
     if (profileData.personalInfo) {
       const { personalInfo } = profileData;
       
-      if (personalInfo.name && !user.name) user.name = personalInfo.name;
+      if (personalInfo.name && (!user.name || user.name.trim() === '')) user.name = personalInfo.name;
       if (personalInfo.email && !user.email) user.email = personalInfo.email;
       if (personalInfo.phone && !user.phone) user.phone = personalInfo.phone;
       if (personalInfo.bio) user.bio = personalInfo.bio;
