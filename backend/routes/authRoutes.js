@@ -28,4 +28,14 @@ router.get('/status', (req, res) => {
   });
 });
 
+// Test route to check cookies
+router.get('/test-cookie', (req, res) => {
+  res.json({
+    success: true,
+    cookies: req.cookies,
+    headers: req.headers.cookie,
+    message: 'Cookie test endpoint'
+  });
+});
+
 export default router;

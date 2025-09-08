@@ -92,7 +92,7 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/",
-      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
+      // Remove domain restriction to allow cookie to work across subdomains
     };
 
     console.log('Setting cookie with options:', options);
