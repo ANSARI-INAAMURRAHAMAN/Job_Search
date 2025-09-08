@@ -16,4 +16,16 @@ router.get('/google/callback',
   googleCallback
 );
 
+// Test route to check OAuth status
+router.get('/status', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Auth service is running',
+    environment: process.env.NODE_ENV,
+    frontendUrl: process.env.FRONTEND_URL,
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL,
+    session: req.session ? 'active' : 'inactive'
+  });
+});
+
 export default router;

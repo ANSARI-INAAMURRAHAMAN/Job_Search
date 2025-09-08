@@ -29,14 +29,13 @@ export const googleAuth = (req, res, next) => {
   const { role } = req.query;
   
   if (!role || !['Employer', 'Job Seeker'].includes(role)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please select a valid role"
-    });
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=invalid_role`);
   }
 
   // Store role in session for callback
   req.session.selectedRole = role;
+  
+  console.log('Google OAuth initiation with role:', role);
 
   passport.authenticate('google', {
     scope: ['profile', 'email']
@@ -46,14 +45,26 @@ export const googleAuth = (req, res, next) => {
 // Google OAuth callback
 export const googleCallback = catchAsyncErrors(async (req, res, next) => {
   try {
+    console.log('Google OAuth callback - User object:', req.user);
+    console.log('Session data:', req.session);
+
+    if (!req.user) {
+      console.error('No user object in request');
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+
     const userInfo = req.user;
     const selectedRole = req.session.selectedRole || 'Job Seeker';
+    
+    console.log('Selected role from session:', selectedRole);
     
     let user;
     
     if (userInfo.needsRole) {
       // Create new user with the selected role
       const { googleProfile } = userInfo;
+      
+      console.log('Creating new user with Google profile:', googleProfile.displayName);
       
       user = await User.create({
         name: googleProfile.displayName,
@@ -63,9 +74,12 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
         password: Math.random().toString(36).slice(-8) + '!A1', // Random secure password
         phone: 1234567890, // Default phone, user can update later
       });
+      
+      console.log('New user created:', user._id);
     } else {
       // User already exists
       user = userInfo;
+      console.log('Using existing user:', user._id);
     }
 
     // Generate token
@@ -78,7 +92,10 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       path: "/",
+      domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
     };
+
+    console.log('Setting cookie with options:', options);
 
     // Set cookie and redirect
     res.cookie("token", token, options);
@@ -87,7 +104,10 @@ export const googleCallback = catchAsyncErrors(async (req, res, next) => {
     delete req.session.selectedRole;
 
     // Redirect to frontend with success
-    res.redirect(`${process.env.FRONTEND_URL}/?auth=success&role=${user.role}`);
+    const redirectUrl = `${process.env.FRONTEND_URL}/?auth=success&role=${encodeURIComponent(user.role)}`;
+    console.log('Redirecting to:', redirectUrl);
+    
+    res.redirect(redirectUrl);
 
   } catch (error) {
     console.error('Google OAuth callback error:', error);

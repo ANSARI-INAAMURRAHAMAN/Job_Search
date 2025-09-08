@@ -114,7 +114,6 @@ const Register = memo(() => {
     <section className="authPage">
       <div className="container">
         <div className="header">
-          <img src="/JobZeelogo.png" alt="logo" loading="lazy" />
           <h3>Create a new account</h3>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">

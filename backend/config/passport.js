@@ -11,10 +11,13 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log('Google OAuth Profile:', profile);
+
         // Check if user already exists with this Google ID
         let existingUser = await User.findOne({ googleId: profile.id });
 
         if (existingUser) {
+          console.log('Existing user found with Google ID');
           return done(null, existingUser);
         }
 
@@ -22,18 +25,24 @@ passport.use(
         existingUser = await User.findOne({ email: profile.emails[0].value });
 
         if (existingUser) {
+          console.log('Existing user found with email, linking Google account');
           // Link Google account to existing user
           existingUser.googleId = profile.id;
           await existingUser.save();
           return done(null, existingUser);
         }
 
-        // Create new user data object for role selection
+        // New user - needs role selection
+        console.log('New user, needs role selection');
         const newUserData = {
           googleProfile: profile,
           needsRole: true,
         };
+        
+        return done(null, newUserData); // This was missing!
+        
       } catch (error) {
+        console.error('Passport Strategy Error:', error);
         return done(error, null);
       }
     }
