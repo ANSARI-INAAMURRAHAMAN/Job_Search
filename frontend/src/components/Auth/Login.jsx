@@ -119,7 +119,6 @@ const Login = memo(() => {
     <section className="authPage">
       <div className="container">
         <div className="header">
-          <img src="/JobZeelogo.png" alt="logo" loading="lazy" />
           <h3>Login to your account</h3>
         </div>
         <form onSubmit={handleSubmit} className="auth-form">
